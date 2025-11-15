@@ -4,60 +4,6 @@
     box-sizing: border-box;
 }
 
-body {
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-    background: #020a04;
-    background-image: 
-        radial-gradient(circle at 10% 20%, rgba(22, 163, 74, 0.18) 0%, transparent 55%),
-        radial-gradient(circle at 80% 0%, rgba(22, 163, 74, 0.12) 0%, transparent 55%),
-        radial-gradient(circle at 50% 100%, rgba(22, 163, 74, 0.14) 0%, transparent 55%);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-    padding: 18px;
-    overflow-x: hidden;
-}
-
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-    background-size: 50px 50px;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.app-shell {
-    width: min(1120px, 100%);
-    margin: 0 auto;
-    position: relative;
-    z-index: 2;
-}
-
-.app-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding: 14px 24px;
-    background: rgba(2, 10, 4, 0.85);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        0 12px 40px rgba(0, 0, 0, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(16px);
-}
-
 .brand-title {
     font-size: 1.1rem;
     font-weight: 700;
@@ -162,11 +108,11 @@ body::before {
     .game-layout .right-panel {
         order: 3;
     }
-}
-
-@media (max-width: 900px) {
-    .touch-controls {
-        display: flex;
+    .hide-on-mobile {
+        display: none;
+    }
+    .mobile-stats-grid {
+        display: grid;
     }
 }
 
@@ -220,9 +166,6 @@ body::before {
 }
 
 @media (max-width: 560px) {
-    .touch-row {
-        flex-direction: column;
-    }
     .controls-grid {
         grid-template-columns: 1fr;
     }
@@ -237,6 +180,30 @@ body::before {
     }
     .main-game .pill {
         padding: 10px 12px;
+    }
+    .touch-pad {
+        grid-template-columns: repeat(3, minmax(0, 70px));
+    }
+    .touch-actions {
+        grid-template-columns: 1fr;
+    }
+    .mobile-stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 420px) {
+    .tetris-top-bar {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+    .mini-panel canvas {
+        max-width: 120px;
+    }
+    .touch-controls button {
+        padding: 12px;
+    }
+    .touch-pad {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
@@ -346,6 +313,7 @@ canvas {
     width: 300px;
     max-width: 100%;
     height: auto;
+    touch-action: none;
 }
 
 @media (min-width: 1200px) {
@@ -483,6 +451,52 @@ canvas {
     margin-bottom: 14px;
 }
 
+.tetris-top-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    width: 100%;
+}
+
+.mini-panel {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 10px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mini-panel span {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.mini-panel canvas {
+    width: 100%;
+    max-width: 140px;
+    margin: 0 auto;
+}
+
+.mode-card {
+    gap: 14px;
+    justify-content: space-between;
+}
+
+.mode-card .mode-indicator {
+    width: 100%;
+}
+
+.mode-card .fuckass-btn {
+    width: 100%;
+}
+
 .controls-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -491,6 +505,107 @@ canvas {
 
 .controls-grid p {
     margin: 0;
+}
+
+.hide-on-mobile {
+    display: block;
+}
+
+.mobile-stats-grid {
+    display: none;
+    margin-top: 8px;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.mobile-stat {
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 23, 42, 0.75);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mobile-stat span {
+    display: block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.55);
+    margin-bottom: 6px;
+}
+
+.mobile-stat strong {
+    font-size: 1.3rem;
+    color: #bbf7d0;
+}
+
+.touch-controls {
+    display: none;
+    width: 100%;
+    margin-top: 12px;
+}
+
+.touch-controls.touch-active {
+    display: flex;
+}
+
+.gesture-card {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.75);
+    border-radius: 18px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.gesture-card h3 {
+    font-size: 0.95rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 12px;
+}
+
+.gesture-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+}
+
+.gesture-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.gesture-list strong {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    color: #bbf7d0;
+}
+
+.gesture-list span {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.touch-hint {
+    margin-top: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.8rem;
+    text-align: center;
+    line-height: 1.4;
 }
 
 .pill {
@@ -762,34 +877,54 @@ canvas {
 .touch-controls {
     display: none;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     width: 100%;
     margin-top: 12px;
+}
+
+.touch-pad {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.touch-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
 }
 
 .touch-controls.touch-active {
     display: flex;
 }
 
-.touch-row {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-}
-
 .touch-controls button {
-    flex: 1 1 0;
-    padding: 12px 14px;
+    padding: 14px 16px;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(15, 23, 42, 0.85);
     color: #bbf7d0;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     cursor: pointer;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.touch-pad button {
+    font-size: 1.4rem;
+}
+
+.touch-actions button {
+    letter-spacing: 0.04em;
+}
+
+.touch-hint {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.78rem;
+    text-align: center;
 }
 
 .touch-controls button:active {

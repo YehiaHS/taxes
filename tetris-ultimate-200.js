@@ -29,6 +29,8 @@ const SHAPES = {
 
 // Game State
 let canvas, ctx, nextCanvas, nextCtx, holdCanvas, holdCtx;
+let scoreElement, levelElement, linesElement, comboElement;
+let scoreMobileElement, levelMobileElement, linesMobileElement, comboMobileElement;
 let board = [];
 let currentPiece = null;
 let nextPiece = null;
@@ -411,6 +413,14 @@ function init() {
     nextCtx = nextCanvas.getContext('2d');
     holdCanvas = document.getElementById('holdCanvas');
     holdCtx = holdCanvas.getContext('2d');
+    scoreElement = document.getElementById('score');
+    levelElement = document.getElementById('level');
+    linesElement = document.getElementById('lines');
+    comboElement = document.getElementById('combo');
+    scoreMobileElement = document.getElementById('scoreMobile');
+    levelMobileElement = document.getElementById('levelMobile');
+    linesMobileElement = document.getElementById('linesMobile');
+    comboMobileElement = document.getElementById('comboMobile');
     
     console.log('Canvas initialized:', canvas, ctx);
     
@@ -626,40 +636,133 @@ function setupTouchControls() {
     const container = document.getElementById('tetrisTouchControls');
     if (!container) return;
     const prefersTouch = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
-    if (prefersTouch) {
-        container.classList.add('touch-active');
-    }
-    const bindings = [
-        { id: 'tetris-btn-left', handler: () => movePieceMobile(-1), repeat: true },
-        { id: 'tetris-btn-right', handler: () => movePieceMobile(1), repeat: true },
-        { id: 'tetris-btn-down', handler: () => softDropMobile(), repeat: true },
-        { id: 'tetris-btn-rotate', handler: () => rotateMobile() },
-        { id: 'tetris-btn-harddrop', handler: () => hardDropMobile() },
-        { id: 'tetris-btn-hold', handler: () => holdMobile() }
-    ];
-    bindings.forEach(({ id, handler, repeat = false }) => {
-        const button = document.getElementById(id);
-        if (!button) return;
-        let intervalId = null;
-        const invoke = () => handler();
-        const start = (event) => {
-            event.preventDefault();
-            invoke();
-            if (repeat && intervalId === null) {
-                intervalId = setInterval(invoke, 140);
+    const enableTouchControls = () => container.classList.add('touch-active');
+    const disableTouchControls = () => container.classList.remove('touch-active');
+    const updateTouchVisibility = () => {
+        if (prefersTouch || window.innerWidth <= 960) {
+            enableTouchControls();
+        } else {
+            disableTouchControls();
+        }
+    };
+    updateTouchVisibility();
+    window.addEventListener('resize', updateTouchVisibility);
+    setupSwipeControls();
+}
+
+function setupSwipeControls() {
+    if (!canvas) return;
+    canvas.style.touchAction = 'none';
+    const swipeState = {
+        active: false,
+        startX: 0,
+        startY: 0,
+        lastX: 0,
+        lastY: 0,
+        accumX: 0,
+        accumY: 0,
+        hardDropTriggered: false,
+        tapCandidate: false,
+        startTime: 0
+    };
+    let lastTapTime = 0;
+    const MOVE_THRESHOLD = 28;
+    const HARD_DROP_THRESHOLD = 70;
+    const TAP_DISTANCE = 12;
+    const TAP_TIME = 250;
+
+    const handlePointerDown = (event) => {
+        if (event.pointerType !== 'touch') return;
+        event.preventDefault();
+        swipeState.active = true;
+        swipeState.startX = swipeState.lastX = event.clientX;
+        swipeState.startY = swipeState.lastY = event.clientY;
+        swipeState.accumX = 0;
+        swipeState.accumY = 0;
+        swipeState.hardDropTriggered = false;
+        swipeState.tapCandidate = true;
+        swipeState.startTime = performance.now();
+        try {
+            canvas.setPointerCapture(event.pointerId);
+        } catch (_) {
+            // Ignore capture errors (e.g., unsupported browsers)
+        }
+    };
+
+    const handlePointerMove = (event) => {
+        if (!swipeState.active || event.pointerType !== 'touch') return;
+        event.preventDefault();
+        const deltaX = event.clientX - swipeState.lastX;
+        const deltaY = event.clientY - swipeState.lastY;
+        swipeState.accumX += deltaX;
+        swipeState.accumY += deltaY;
+        swipeState.lastX = event.clientX;
+        swipeState.lastY = event.clientY;
+
+        while (swipeState.accumX <= -MOVE_THRESHOLD) {
+            movePieceMobile(-1);
+            swipeState.accumX += MOVE_THRESHOLD;
+            swipeState.tapCandidate = false;
+        }
+        while (swipeState.accumX >= MOVE_THRESHOLD) {
+            movePieceMobile(1);
+            swipeState.accumX -= MOVE_THRESHOLD;
+            swipeState.tapCandidate = false;
+        }
+        while (swipeState.accumY >= MOVE_THRESHOLD) {
+            softDropMobile();
+            swipeState.accumY -= MOVE_THRESHOLD;
+            swipeState.tapCandidate = false;
+        }
+
+        const upwardTravel = swipeState.startY - event.clientY;
+        if (!swipeState.hardDropTriggered && upwardTravel >= HARD_DROP_THRESHOLD) {
+            hardDropMobile();
+            swipeState.hardDropTriggered = true;
+            swipeState.tapCandidate = false;
+        }
+
+        if (
+            Math.abs(event.clientX - swipeState.startX) > TAP_DISTANCE ||
+            Math.abs(event.clientY - swipeState.startY) > TAP_DISTANCE
+        ) {
+            swipeState.tapCandidate = false;
+        }
+    };
+
+    const handlePointerEnd = (event) => {
+        if (!swipeState.active || (event.pointerType && event.pointerType !== 'touch')) return;
+        event.preventDefault();
+        try {
+            if (canvas.hasPointerCapture(event.pointerId)) {
+                canvas.releasePointerCapture(event.pointerId);
             }
-        };
-        const stop = () => {
-            if (intervalId !== null) {
-                clearInterval(intervalId);
-                intervalId = null;
-            }
-        };
-        button.addEventListener('pointerdown', start);
-        button.addEventListener('pointerup', stop);
-        button.addEventListener('pointerleave', stop);
-        button.addEventListener('pointercancel', stop);
-    });
+        } catch (_) {
+            // Ignore release errors
+        }
+        const elapsed = performance.now() - swipeState.startTime;
+        const totalMove = Math.hypot(event.clientX - swipeState.startX, event.clientY - swipeState.startY);
+        if (swipeState.tapCandidate && totalMove < TAP_DISTANCE && elapsed < TAP_TIME) {
+            handleTap();
+        }
+        swipeState.active = false;
+    };
+
+    const handleTap = () => {
+        const now = performance.now();
+        if (now - lastTapTime < 250) {
+            holdMobile();
+            lastTapTime = 0;
+        } else {
+            rotateMobile();
+            lastTapTime = now;
+        }
+    };
+
+    canvas.addEventListener('pointerdown', handlePointerDown, { passive: false });
+    canvas.addEventListener('pointermove', handlePointerMove, { passive: false });
+    canvas.addEventListener('pointerup', handlePointerEnd, { passive: false });
+    canvas.addEventListener('pointercancel', handlePointerEnd, { passive: false });
 }
 
 function movePieceMobile(direction) {
@@ -691,10 +794,31 @@ function holdMobile() {
 }
 
 function updateDisplay() {
-    document.getElementById('score').textContent = score;
-    document.getElementById('level').textContent = level;
-    document.getElementById('lines').textContent = lines;
-    document.getElementById('combo').textContent = combo > 0 ? `${combo}x` : '';
+    const comboText = combo > 0 ? `${combo}x` : '';
+    if (scoreElement) {
+        scoreElement.textContent = score.toLocaleString();
+    }
+    if (levelElement) {
+        levelElement.textContent = level;
+    }
+    if (linesElement) {
+        linesElement.textContent = lines;
+    }
+    if (comboElement) {
+        comboElement.textContent = comboText;
+    }
+    if (scoreMobileElement) {
+        scoreMobileElement.textContent = score.toLocaleString();
+    }
+    if (levelMobileElement) {
+        levelMobileElement.textContent = level;
+    }
+    if (linesMobileElement) {
+        linesMobileElement.textContent = lines;
+    }
+    if (comboMobileElement) {
+        comboMobileElement.textContent = combo > 0 ? comboText : '—';
+    }
 }
 
 // Enhanced piece creation with special pieces (Feature 321-330)

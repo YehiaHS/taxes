@@ -23,11 +23,7 @@
 
         <div class="game-container game-layout">
         <div class="side-panel left-panel">
-            <div class="panel-section">
-                <h3>HOLD</h3>
-                <canvas id="holdCanvas" width="120" height="120"></canvas>
-            </div>
-            <div class="panel-section">
+            <div class="panel-section hide-on-mobile">
                 <h3>CONTROLS</h3>
                 <div class="controls-info controls-grid">
                     <p>← → : Move</p>
@@ -46,14 +42,10 @@
                     <p style="color: #ff0080; font-weight: bold;">F : 🤬 FUCKASS</p>
                 </div>
             </div>
-            <div class="panel-section">
-                <h3>MODE</h3>
-                <div class="mode-indicator" id="modeIndicator">
-                    <p>Normal</p>
-                </div>
-                <button id="fuckassButton" class="fuckass-btn">
-                    🤬 FUCKASS MODE
-                </button>
+            <div class="panel-section hide-on-mobile">
+                <h3>PLAY TIPS</h3>
+                <p>On phones, swipe directly on the board to move, drop, or rotate pieces.</p>
+                <p>Tap the Mode card beside the board to toggle Softbody or Fuckass chaos.</p>
             </div>
         </div>
 
@@ -73,6 +65,25 @@
                 </div>
             </div>
             <h1 class="game-title">TETRIS ULTIMATE</h1>
+            <div class="tetris-top-bar">
+                <div class="mini-panel">
+                    <span>Hold</span>
+                    <canvas id="holdCanvas" width="120" height="120"></canvas>
+                </div>
+                <div class="mini-panel">
+                    <span>Next</span>
+                    <canvas id="nextCanvas" width="120" height="360"></canvas>
+                </div>
+                <div class="mini-panel mode-card">
+                    <span>Mode</span>
+                    <div class="mode-indicator" id="modeIndicator">
+                        <p>Normal</p>
+                    </div>
+                    <button id="fuckassButton" class="fuckass-btn">
+                        🤬 FUCKASS MODE
+                    </button>
+                </div>
+            </div>
             <canvas id="gameCanvas" width="300" height="600"></canvas>
             <div class="game-over-overlay" id="gameOverOverlay">
                 <h2>GAME OVER</h2>
@@ -81,24 +92,39 @@
                 <button id="restartButton">Play Again</button>
             </div>
             <div class="touch-controls" id="tetrisTouchControls" aria-label="Tetris touch controls">
-                <div class="touch-row">
-                    <button type="button" id="tetris-btn-left">◀ Left</button>
-                    <button type="button" id="tetris-btn-down">▼ Drop</button>
-                    <button type="button" id="tetris-btn-right">Right ▶</button>
+                <div class="gesture-card">
+                    <h3>Swipe Controls</h3>
+                    <ul class="gesture-list">
+                        <li><strong>Swipe left / right</strong><span>Slide the piece</span></li>
+                        <li><strong>Swipe down</strong><span>Soft drop with momentum</span></li>
+                        <li><strong>Swipe up</strong><span>Instant hard drop</span></li>
+                        <li><strong>Tap</strong><span>Rotate clockwise</span></li>
+                        <li><strong>Double tap</strong><span>Hold piece</span></li>
+                    </ul>
+                    <p class="touch-hint">Keep your finger on the board to string moves together without lifting.</p>
                 </div>
-                <div class="touch-row">
-                    <button type="button" id="tetris-btn-rotate">↻ Rotate</button>
-                    <button type="button" id="tetris-btn-harddrop">⤓ Slam</button>
-                    <button type="button" id="tetris-btn-hold">⧉ Hold</button>
+            </div>
+            <div class="mobile-stats-grid" aria-label="Quick stats">
+                <div class="mobile-stat">
+                    <span>Score</span>
+                    <strong id="scoreMobile">0</strong>
+                </div>
+                <div class="mobile-stat">
+                    <span>Level</span>
+                    <strong id="levelMobile">1</strong>
+                </div>
+                <div class="mobile-stat">
+                    <span>Lines</span>
+                    <strong id="linesMobile">0</strong>
+                </div>
+                <div class="mobile-stat">
+                    <span>Combo</span>
+                    <strong id="comboMobile">—</strong>
                 </div>
             </div>
         </div>
 
         <div class="side-panel right-panel">
-            <div class="panel-section">
-                <h3>NEXT</h3>
-                <canvas id="nextCanvas" width="120" height="360"></canvas>
-            </div>
             <div class="panel-section compact-metrics">
                 <div class="metric">
                     <span>Score</span>
