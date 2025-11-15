@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metro Dash</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="app-header">
+            <div class="brand-title">Ultimate Stack Lab</div>
+            <nav class="nav-links">
+                <a href="hub.html">Hub</a>
+                <a href="index.html">Tetris</a>
+                <a href="chess.html">Chess</a>
+                <a href="runner.html" class="active">Runner</a>
+            </nav>
+            <button class="cta-link" onclick="location.href='hub.html'">Back to Hub</button>
+        </header>
+
+        <div class="game-container game-layout runner-layout">
+            <div class="side-panel left-panel">
+                <div class="panel-section">
+                    <h3>CONTROLS</h3>
+                    <div class="controls-info controls-grid">
+                        <p>← → : Switch Lanes</p>
+                        <p>↑ : Jump</p>
+                        <p>↓ : Slide</p>
+                        <p>Space : Hoverboard</p>
+                        <p>R : Restart</p>
+                        <p>M : Toggle Music (soon)</p>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <h3>POWER-UPS</h3>
+                    <ul class="runner-list">
+                        <li><strong>Magnet</strong> pulls coins from all lanes.</li>
+                        <li><strong>Shield</strong> absorbs one crash.</li>
+                        <li><strong>Hoverboard</strong> manual panic button.</li>
+                    </ul>
+                </div>
+                <div class="panel-section">
+                    <h3>OBSTACLE TYPES</h3>
+                    <ul class="runner-list">
+                        <li>Ground barriers → jump.</li>
+                        <li>Hover drones → slide.</li>
+                        <li>Trains → change lanes.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="main-game runner-stage">
+                <div class="status-badges runner-badges">
+                    <div class="pill">
+                        <span>DISTANCE</span>
+                        <strong id="runnerScore">0</strong>
+                    </div>
+                    <div class="pill">
+                        <span>COINS</span>
+                        <strong id="runnerCoins">0</strong>
+                    </div>
+                    <div class="pill">
+                        <span>MULTIPLIER</span>
+                        <strong id="runnerMultiplier">x1</strong>
+                    </div>
+                    <div class="pill">
+                        <span>POWER</span>
+                        <strong id="runnerPower">---</strong>
+                    </div>
+                </div>
+                <h1 class="game-title">METRO DASH</h1>
+                <canvas id="runnerCanvas" width="720" height="360"></canvas>
+                <div class="runner-overlay" id="runnerOverlay">
+                    <div>
+                        <h2 id="runnerOverlayTitle">Tap to Ride</h2>
+                        <p id="runnerOverlaySubtitle">Press any arrow to start dodging the trains.</p>
+                        <button class="primary-btn" id="runnerPlayButton">Start Run</button>
+                    </div>
+                </div>
+                <div class="touch-controls runner-controls" id="runnerTouchControls" aria-label="Runner touch controls">
+                    <div class="touch-row">
+                        <button type="button" id="runner-btn-left">◀ Lane</button>
+                        <button type="button" id="runner-btn-right">Lane ▶</button>
+                    </div>
+                    <div class="touch-row">
+                        <button type="button" id="runner-btn-jump">⬆ Jump</button>
+                        <button type="button" id="runner-btn-slide">⬇ Slide</button>
+                        <button type="button" id="runner-btn-hover">⟲ Hover</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel right-panel">
+                <div class="panel-section">
+                    <h3>SESSION</h3>
+                    <div class="runner-session">
+                        <div>
+                            <span>Best Distance</span>
+                            <strong id="runnerBest">0</strong>
+                        </div>
+                        <div>
+                            <span>Shield Charges</span>
+                            <strong id="runnerShield">0</strong>
+                        </div>
+                        <div>
+                            <span>Magnet Time</span>
+                            <strong id="runnerMagnet">0s</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <h3>EVENT FEED</h3>
+                    <ul class="runner-feed" id="runnerFeed"></ul>
+                </div>
+            </div>
+        </div>
+
+        <footer class="app-footer">
+            Shift lanes, scoop coins, launch the hoverboard, and chase the flashing multiplier without clipping a train.
+        </footer>
+    </div>
+
+    <script src="runner.js"></script>
+</body>
+</html>

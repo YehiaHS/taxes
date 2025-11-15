@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Tetris - 100+ Features!</title>
+    <link rel="stylesheet" href="styles-ultimate.css">
+</head>
+<body>
+    <audio id="bgMusic" loop></audio>
+    <div class="particles" id="particles"></div>
+    <div class="screen-overlay" id="screenOverlay"></div>
+    
+    <div class="app-shell">
+        <header class="app-header">
+            <div class="brand-title">Ultimate Stack Lab</div>
+            <nav class="nav-links">
+                <a href="hub.html">Hub</a>
+                <a href="index.html" class="active">Tetris</a>
+                <a href="chess.html">Chess</a>
+                <a href="runner.html">Runner</a>
+            </nav>
+            <button class="cta-link" onclick="location.href='hub.html'">Back to Hub</button>
+        </header>
+
+        <div class="game-container retro-layout">
+        <div class="side-panel left-panel">
+            <div class="panel-section">
+                <h3>HOLD (C)</h3>
+                <canvas id="holdCanvas" width="120" height="120"></canvas>
+            </div>
+            <div class="panel-section">
+                <h3>NEXT QUEUE</h3>
+                <canvas id="queue1Canvas" width="100" height="100"></canvas>
+                <canvas id="queue2Canvas" width="80" height="80"></canvas>
+                <canvas id="queue3Canvas" width="60" height="60"></canvas>
+            </div>
+            <div class="panel-section">
+                <h3>POWER-UPS</h3>
+                <div id="powerUpDisplay" class="powerup-display"></div>
+            </div>
+        </div>
+
+        <div class="main-game">
+            <div class="top-bar">
+                <h1 id="gameTitle">ULTIMATE TETRIS</h1>
+                <div class="combo-display" id="comboDisplay">READY!</div>
+            </div>
+            <div class="status-badges">
+                <div class="pill">
+                    <span>Softbody</span>
+                    <strong>S</strong>
+                </div>
+                <div class="pill">
+                    <span>Menu</span>
+                    <strong>M</strong>
+                </div>
+                <div class="pill">
+                    <span>Fuckass</span>
+                    <strong>F</strong>
+                </div>
+            </div>
+            
+            <div class="game-wrapper">
+                <canvas id="backgroundCanvas" width="300" height="600"></canvas>
+                <canvas id="gameCanvas" width="300" height="600"></canvas>
+                <canvas id="effectCanvas" width="300" height="600"></canvas>
+            </div>
+            
+            <div class="controls-hint">
+                <span>←→: Move | ↑↓: Rotate | Space: Drop | C: Hold | P: Pause | R: Restart | M: Menu | S: Softbody | G: Grid | N: Night | F: Freeze | B: Bomb | 1-9: Speeds</span>
+            </div>
+
+            <!-- Menu Overlay -->
+            <div class="menu-overlay active" id="menuOverlay">
+                <h2>🎮 ULTIMATE TETRIS</h2>
+                <p class="subtitle">100+ Features Edition</p>
+                <div class="menu-options">
+                    <button class="menu-btn" id="startClassic">🎯 Classic Mode</button>
+                    <button class="menu-btn" id="startSprint">⚡ Sprint 40 Lines</button>
+                    <button class="menu-btn" id="startMarathon">🏃 Marathon Mode</button>
+                    <button class="menu-btn" id="startZen">🧘 Zen Mode (No Timer)</button>
+                    <button class="menu-btn" id="startChallenge">💪 Challenge Mode</button>
+                    <button class="menu-btn" id="startCrazy">🎪 Crazy Mode</button>
+                </div>
+                <div class="settings-section">
+                    <h3>⚙️ SETTINGS</h3>
+                    <label><input type="checkbox" id="ghostToggle" checked> Ghost Piece</label>
+                    <label><input type="checkbox" id="musicToggle"> Background Music</label>
+                    <label><input type="checkbox" id="soundToggle" checked> Sound Effects</label>
+                    <label><input type="checkbox" id="gridToggle" checked> Show Grid</label>
+                    <label><input type="checkbox" id="particlesToggle" checked> Particle Effects</label>
+                    <label><input type="checkbox" id="screenShakeToggle" checked> Screen Shake</label>
+                    <label><input type="checkbox" id="autoSaveToggle" checked> Auto-Save Progress</label>
+                </div>
+            </div>
+
+            <!-- Game Over Overlay -->
+            <div class="game-over-overlay" id="gameOverOverlay">
+                <h2>🎮 GAME OVER</h2>
+                <div class="stats-grid">
+                    <div class="stat-item"><span>Score:</span> <span id="finalScore">0</span></div>
+                    <div class="stat-item"><span>Lines:</span> <span id="finalLines">0</span></div>
+                    <div class="stat-item"><span>Level:</span> <span id="finalLevel">1</span></div>
+                    <div class="stat-item"><span>Max Combo:</span> <span id="finalCombo">1</span></div>
+                    <div class="stat-item"><span>Time:</span> <span id="finalTime">0:00</span></div>
+                    <div class="stat-item"><span>Tetrises:</span> <span id="finalTetrises">0</span></div>
+                </div>
+                <div class="button-group">
+                    <button id="restartButton">🔄 Play Again</button>
+                    <button id="mainMenuButton" class="secondary-btn">🏠 Main Menu</button>
+                </div>
+            </div>
+
+            <!-- Pause Overlay -->
+            <div class="pause-overlay" id="pauseOverlay">
+                <h2>⏸️ PAUSED</h2>
+                <p>Press P to Resume</p>
+                <button id="resumeButton">▶️ Resume</button>
+                <button id="pauseMenuButton" class="secondary-btn">🏠 Main Menu</button>
+            </div>
+        </div>
+
+        <div class="side-panel right-panel">
+            <div class="panel-section metrics-grid">
+                <div class="metric">
+                    <span>Score</span>
+                    <strong id="score">0</strong>
+                </div>
+                <div class="metric">
+                    <span>High Score</span>
+                    <strong id="highScore" class="highlight">0</strong>
+                </div>
+                <div class="metric">
+                    <span>Level</span>
+                    <strong id="level">1</strong>
+                </div>
+                <div class="metric">
+                    <span>Lines</span>
+                    <strong id="lines">0</strong>
+                </div>
+                <div class="metric">
+                    <span>Time</span>
+                    <strong id="timer">0:00</strong>
+                </div>
+                <div class="metric">
+                    <span>Streak</span>
+                    <strong id="streak">0</strong>
+                </div>
+                <div class="metric">
+                    <span>Accuracy</span>
+                    <strong id="accuracy">100%</strong>
+                </div>
+            </div>
+            <div class="panel-section">
+                <h3>📊 PIECE STATS</h3>
+                <div class="piece-stats">
+                    <div class="stat-row"><span style="color: #00f0f0">I:</span><span id="stat-I">0</span></div>
+                    <div class="stat-row"><span style="color: #f0f000">O:</span><span id="stat-O">0</span></div>
+                    <div class="stat-row"><span style="color: #a000f0">T:</span><span id="stat-T">0</span></div>
+                    <div class="stat-row"><span style="color: #00f000">S:</span><span id="stat-S">0</span></div>
+                    <div class="stat-row"><span style="color: #f00000">Z:</span><span id="stat-Z">0</span></div>
+                    <div class="stat-row"><span style="color: #0000f0">J:</span><span id="stat-J">0</span></div>
+                    <div class="stat-row"><span style="color: #f0a000">L:</span><span id="stat-L">0</span></div>
+                </div>
+            </div>
+            <div class="panel-section">
+                <h3>MODE</h3>
+                <div class="mode-indicator" id="modeIndicator">
+                    <p>Normal</p>
+                </div>
+            </div>
+            <div class="panel-section">
+                <h3>🏆 ACHIEVEMENTS</h3>
+                <div id="achievementList" class="achievement-list"></div>
+            </div>
+        </div>
+
+        </div>
+
+        <footer class="app-footer">Use the hub links above to swap into chess or the modern board instantly.</footer>
+    </div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="achievement-popup" id="achievementPopup"></div>
+    
+    <script src="tetris-ultimate.js"></script>
+</body>
+</html>

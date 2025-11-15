@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Retro Chess</title>
+    <link rel="stylesheet" href="styles-ultimate.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="app-header">
+            <div class="brand-title">Ultimate Stack Lab</div>
+            <nav class="nav-links">
+                <a href="hub.html">Hub</a>
+                <a href="index.html">Tetris</a>
+                <a href="chess.html" class="active">Chess</a>
+                <a href="runner.html">Runner</a>
+            </nav>
+            <button class="cta-link" onclick="location.href='hub.html'">Back to Hub</button>
+        </header>
+
+        <div class="game-container retro-layout">
+            <div class="side-panel left-panel">
+                <div class="panel-section">
+                    <h3>MODE</h3>
+                    <div class="mode-indicator" id="chessModeIndicator">
+                        <p>Classic vs Human</p>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <h3>BOT SETTINGS</h3>
+                    <div class="controls-info">
+                        <p><label><input type="checkbox" id="enableChessBot"> Play vs Bot (Black)</label></p>
+                        <p>Depth: <input type="range" id="chessBotDepth" min="1" max="3" value="1"></p>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <h3>CONTROLS</h3>
+                    <div class="controls-info">
+                        <p>Click piece, then square</p>
+                        <p>R: Restart • F: Fuckass</p>
+                        <p>ESC: Clear selection</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-game">
+                <div class="status-badges">
+                    <div class="pill">
+                        <span>Current Turn</span>
+                        <strong id="chessStatus">White to move</strong>
+                    </div>
+                    <div class="pill">
+                        <span>Total Moves</span>
+                        <strong id="chessMoveCount">0</strong>
+                    </div>
+                    <div class="pill">
+                        <span>Clock</span>
+                        <strong id="chessTimer">00:00</strong>
+                    </div>
+                </div>
+                <h1 id="gameTitle">RETRO CHESS</h1>
+                <canvas id="chessCanvas" width="560" height="560"></canvas>
+                <div class="game-over-overlay" id="chessGameOver">
+                    <h2>GAME OVER</h2>
+                    <p id="chessResult"></p>
+                    <button id="chessRestartButton">Play Again</button>
+                    <button id="backToHubFromChess">Back to Hub</button>
+                </div>
+            </div>
+
+            <div class="side-panel right-panel">
+                <div class="panel-section">
+                    <h3>MOVE LIST</h3>
+                    <ol id="chessMoveList" class="move-list"></ol>
+                </div>
+                <div class="panel-section">
+                    <h3>QUICK ACTIONS</h3>
+                    <div class="action-buttons">
+                        <button id="chessRestartButtonInline" class="primary-btn">Restart Match</button>
+                        <button id="backToHubInline" class="secondary-btn">Hub</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="app-footer">Slide into a CRT chess vibe without losing any of the advanced rules.</footer>
+    </div>
+
+    <script src="chess.js"></script>
+</body>
+</html>

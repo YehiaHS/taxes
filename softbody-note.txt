@@ -1,0 +1,1 @@
+Softbody mode: each contiguous block cluster becomes a rigid jello piece with its own (x,y,vx,vy,angle). Pieces keep their shape but can bounce and slide before coming to rest anywhere on the board.

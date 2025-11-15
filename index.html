@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Ultimate</title>
+    <link rel="prefetch" href="chess.html">
+    <link rel="prefetch" href="hub.html">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-tetris">
+    <div class="app-shell">
+        <header class="app-header">
+            <div class="brand-title">Ultimate Stack Lab</div>
+            <nav class="nav-links">
+                <a href="hub.html">Hub</a>
+                <a href="index.html" class="active">Tetris</a>
+                <a href="chess.html">Chess</a>
+                <a href="runner.html">Runner</a>
+            </nav>
+            <button class="cta-link" onclick="location.href='hub.html'">Back to Hub</button>
+        </header>
+
+        <div class="game-container game-layout">
+        <div class="side-panel left-panel">
+            <div class="panel-section">
+                <h3>HOLD</h3>
+                <canvas id="holdCanvas" width="120" height="120"></canvas>
+            </div>
+            <div class="panel-section">
+                <h3>CONTROLS</h3>
+                <div class="controls-info controls-grid">
+                    <p>← → : Move</p>
+                    <p>↓ : Soft Drop</p>
+                    <p>Space : Hard Drop</p>
+                    <p>↑/X : Rotate R</p>
+                    <p>Z : Rotate L</p>
+                    <p>C : Hold</p>
+                    <p>P : Pause</p>
+                    <p>S : Softbody</p>
+                    <p>R : Rainbow</p>
+                    <p>G : Ghost</p>
+                    <p>T : Trail</p>
+                    <p>I : Invisible</p>
+                    <p>B : Bomb</p>
+                    <p style="color: #ff0080; font-weight: bold;">F : 🤬 FUCKASS</p>
+                </div>
+            </div>
+            <div class="panel-section">
+                <h3>MODE</h3>
+                <div class="mode-indicator" id="modeIndicator">
+                    <p>Normal</p>
+                </div>
+                <button id="fuckassButton" class="fuckass-btn">
+                    🤬 FUCKASS MODE
+                </button>
+            </div>
+        </div>
+
+        <div class="main-game">
+            <div class="status-badges">
+                <div class="pill">
+                    <span>Softbody Toggle</span>
+                    <strong>S Key</strong>
+                </div>
+                <div class="pill">
+                    <span>Fuckass Chaos</span>
+                    <strong>F Key</strong>
+                </div>
+                <div class="pill">
+                    <span>Quick Drop</span>
+                    <strong>Space Bar</strong>
+                </div>
+            </div>
+            <h1 class="game-title">TETRIS ULTIMATE</h1>
+            <canvas id="gameCanvas" width="300" height="600"></canvas>
+            <div class="game-over-overlay" id="gameOverOverlay">
+                <h2>GAME OVER</h2>
+                <p>Final Score: <span id="finalScore">0</span></p>
+                <p id="highScoreDisplay"></p>
+                <button id="restartButton">Play Again</button>
+            </div>
+            <div class="touch-controls" id="tetrisTouchControls" aria-label="Tetris touch controls">
+                <div class="touch-row">
+                    <button type="button" id="tetris-btn-left">◀ Left</button>
+                    <button type="button" id="tetris-btn-down">▼ Drop</button>
+                    <button type="button" id="tetris-btn-right">Right ▶</button>
+                </div>
+                <div class="touch-row">
+                    <button type="button" id="tetris-btn-rotate">↻ Rotate</button>
+                    <button type="button" id="tetris-btn-harddrop">⤓ Slam</button>
+                    <button type="button" id="tetris-btn-hold">⧉ Hold</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-panel right-panel">
+            <div class="panel-section">
+                <h3>NEXT</h3>
+                <canvas id="nextCanvas" width="120" height="360"></canvas>
+            </div>
+            <div class="panel-section compact-metrics">
+                <div class="metric">
+                    <span>Score</span>
+                    <strong id="score">0</strong>
+                </div>
+                <div class="metric">
+                    <span>Level</span>
+                    <strong id="level">1</strong>
+                </div>
+                <div class="metric">
+                    <span>Lines</span>
+                    <strong id="lines">0</strong>
+                </div>
+                <div class="metric">
+                    <span>Combo</span>
+                    <strong id="combo"></strong>
+                </div>
+            </div>
+        </div>
+
+        <footer class="app-footer">
+            Toggle chaos with <strong>F</strong>, unleash jelly with <strong>S</strong>, and punch out of danger with <strong>Space</strong>.
+        </footer>
+    </div>
+
+    <script src="tetris-ultimate-200.js"></script>
+    <script>
+        window.addEventListener('keydown', function (e) {
+            const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '];
+            if (keys.includes(e.key)) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
