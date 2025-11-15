@@ -242,9 +242,6 @@ body::before {
     .mini-panel {
         padding: 10px 10px 12px;
     }
-    #gameCanvas {
-        width: 230px;
-    }
     .mobile-stats-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -266,9 +263,6 @@ body::before {
     }
     .tetris-column {
         min-width: 92px;
-    }
-    #gameCanvas {
-        width: 210px;
     }
     .compact-mode .fuckass-btn {
         font-size: 0.7rem;
@@ -392,9 +386,6 @@ canvas {
 }
 
 @media (max-width: 720px) {
-    #gameCanvas {
-        width: 260px;
-    }
     .tetris-stage {
         gap: 12px;
     }
@@ -564,7 +555,7 @@ canvas {
 
 .tetris-stage {
     display: grid;
-    grid-template-columns: auto minmax(0, auto) auto;
+    grid-template-columns: auto minmax(300px, auto) auto;
     gap: 18px;
     width: 100%;
     align-items: flex-start;
@@ -594,6 +585,7 @@ canvas {
     position: relative;
     display: flex;
     justify-content: center;
+    min-width: 300px;
 }
 
 .tall-panel canvas {
@@ -1091,15 +1083,28 @@ canvas {
 @media (max-width: 640px) {
     .side-panel {
         flex-direction: column;
+        width: 100%;
     }
-
     h1 {
         font-size: 1.5em;
     }
-
+    .compact-mode .fuckass-btn {
+        font-size: 0.75rem;
+        padding: 10px 12px;
+    }
+    .tetris-stage {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 12px;
+    }
+    .tetris-stage > * {
+        flex: 0 0 auto;
+    }
     #gameCanvas {
-        width: 250px;
-        height: 500px;
+        width: 300px;
+        min-width: 300px;
+        height: auto;
     }
 }
 
