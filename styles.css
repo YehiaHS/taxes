@@ -4,6 +4,60 @@
     box-sizing: border-box;
 }
 
+body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background: #020a04;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(22, 163, 74, 0.18) 0%, transparent 55%),
+        radial-gradient(circle at 80% 0%, rgba(22, 163, 74, 0.12) 0%, transparent 55%),
+        radial-gradient(circle at 50% 100%, rgba(22, 163, 74, 0.14) 0%, transparent 55%);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 18px;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.app-shell {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 14px 24px;
+    background: rgba(2, 10, 4, 0.85);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+}
+
 .brand-title {
     font-size: 1.1rem;
     font-weight: 700;
@@ -139,13 +193,6 @@
         width: 100%;
         text-align: center;
     }
-    .side-panel {
-        width: 100%;
-    }
-    .panel-section {
-        width: 100%;
-        padding: 12px;
-    }
     .game-container {
         padding: 16px;
         border-radius: 18px;
@@ -181,11 +228,22 @@
     .main-game .pill {
         padding: 10px 12px;
     }
-    .touch-pad {
-        grid-template-columns: repeat(3, minmax(0, 70px));
+    .gesture-card {
+        padding: 14px 16px;
     }
-    .touch-actions {
-        grid-template-columns: 1fr;
+    .gesture-list li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    .tetris-column {
+        min-width: 105px;
+    }
+    .mini-panel {
+        padding: 10px 10px 12px;
+    }
+    #gameCanvas {
+        width: 230px;
     }
     .mobile-stats-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -193,17 +251,28 @@
 }
 
 @media (max-width: 420px) {
-    .tetris-top-bar {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    }
     .mini-panel canvas {
         max-width: 120px;
     }
-    .touch-controls button {
-        padding: 12px;
+    .gesture-card h3 {
+        font-size: 0.85rem;
+        letter-spacing: 0.18em;
     }
-    .touch-pad {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+    .gesture-list strong {
+        font-size: 0.8rem;
+    }
+    .gesture-list span {
+        font-size: 0.75rem;
+    }
+    .tetris-column {
+        min-width: 92px;
+    }
+    #gameCanvas {
+        width: 210px;
+    }
+    .compact-mode .fuckass-btn {
+        font-size: 0.7rem;
+        padding: 8px 10px;
     }
 }
 
@@ -221,12 +290,12 @@
     position: relative;
     gap: 16px;
     width: 100%;
-    max-width: 560px;
+    max-width: 720px;
     margin: 0 auto;
 }
 
 .page-tetris .main-game {
-    max-width: 520px;
+    max-width: 640px;
 }
 
 .page-tetris .panel-section {
@@ -325,6 +394,12 @@ canvas {
 @media (max-width: 720px) {
     #gameCanvas {
         width: 260px;
+    }
+    .tetris-stage {
+        gap: 12px;
+    }
+    .tetris-column {
+        min-width: 120px;
     }
 }
 
@@ -451,13 +526,6 @@ canvas {
     margin-bottom: 14px;
 }
 
-.tetris-top-bar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    width: 100%;
-}
-
 .mini-panel {
     background: rgba(15, 23, 42, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -489,12 +557,52 @@ canvas {
     justify-content: space-between;
 }
 
-.mode-card .mode-indicator {
+.mode-card .mode-indicator,
+.mode-card .fuckass-btn {
     width: 100%;
 }
 
-.mode-card .fuckass-btn {
+.tetris-stage {
+    display: grid;
+    grid-template-columns: auto minmax(0, auto) auto;
+    gap: 18px;
     width: 100%;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    overscroll-behavior-x: contain;
+}
+
+.tetris-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 150px;
+    align-items: stretch;
+}
+
+.tetris-column.left-stack {
+    align-items: flex-end;
+}
+
+.tetris-column.right-stack {
+    align-items: flex-start;
+}
+
+.tetris-board {
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.tall-panel canvas {
+    height: 360px;
+}
+
+.compact-mode .fuckass-btn {
+    font-size: 0.8rem;
+    padding: 10px 12px;
 }
 
 .controls-grid {
@@ -543,6 +651,8 @@ canvas {
 
 .touch-controls {
     display: none;
+    flex-direction: column;
+    gap: 16px;
     width: 100%;
     margin-top: 12px;
 }
@@ -874,63 +984,7 @@ canvas {
     gap: 6px;
 }
 
-.touch-controls {
-    display: none;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-    margin-top: 12px;
-}
-
-.touch-pad {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.touch-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px;
-}
-
-.touch-controls.touch-active {
-    display: flex;
-}
-
-.touch-controls button {
-    padding: 14px 16px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(15, 23, 42, 0.85);
-    color: #bbf7d0;
-    font-weight: 700;
-    font-size: 1rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.touch-pad button {
-    font-size: 1.4rem;
-}
-
-.touch-actions button {
-    letter-spacing: 0.04em;
-}
-
-.touch-hint {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.78rem;
-    text-align: center;
-}
-
-.touch-controls button:active {
-    transform: translateY(1px);
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
-}
+/* Touch button styles removed in favor of gesture card */
 
 .runner-controls button {
     background: rgba(15, 23, 42, 0.9);

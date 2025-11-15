@@ -59,37 +59,39 @@
                     <span>Fuckass Chaos</span>
                     <strong>F Key</strong>
                 </div>
-                <div class="pill">
-                    <span>Quick Drop</span>
-                    <strong>Space Bar</strong>
-                </div>
             </div>
             <h1 class="game-title">TETRIS ULTIMATE</h1>
-            <div class="tetris-top-bar">
-                <div class="mini-panel">
-                    <span>Hold</span>
-                    <canvas id="holdCanvas" width="120" height="120"></canvas>
-                </div>
-                <div class="mini-panel">
-                    <span>Next</span>
-                    <canvas id="nextCanvas" width="120" height="360"></canvas>
-                </div>
-                <div class="mini-panel mode-card">
-                    <span>Mode</span>
-                    <div class="mode-indicator" id="modeIndicator">
-                        <p>Normal</p>
+            <div class="tetris-stage">
+                <div class="tetris-column left-stack">
+                    <div class="mini-panel">
+                        <span>Hold</span>
+                        <canvas id="holdCanvas" width="120" height="120"></canvas>
                     </div>
-                    <button id="fuckassButton" class="fuckass-btn">
-                        🤬 FUCKASS MODE
-                    </button>
+                    <div class="mini-panel mode-card compact-mode">
+                        <span>Mode</span>
+                        <div class="mode-indicator" id="modeIndicator">
+                            <p>Normal</p>
+                        </div>
+                        <button id="fuckassButton" class="fuckass-btn">
+                            🤬 FUCKASS MODE
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <canvas id="gameCanvas" width="300" height="600"></canvas>
-            <div class="game-over-overlay" id="gameOverOverlay">
-                <h2>GAME OVER</h2>
-                <p>Final Score: <span id="finalScore">0</span></p>
-                <p id="highScoreDisplay"></p>
-                <button id="restartButton">Play Again</button>
+                <div class="tetris-board">
+                    <canvas id="gameCanvas" width="300" height="600"></canvas>
+                    <div class="game-over-overlay" id="gameOverOverlay">
+                        <h2>GAME OVER</h2>
+                        <p>Final Score: <span id="finalScore">0</span></p>
+                        <p id="highScoreDisplay"></p>
+                        <button id="restartButton">Play Again</button>
+                    </div>
+                </div>
+                <div class="tetris-column right-stack">
+                    <div class="mini-panel tall-panel">
+                        <span>Next</span>
+                        <canvas id="nextCanvas" width="120" height="360"></canvas>
+                    </div>
+                </div>
             </div>
             <div class="touch-controls" id="tetrisTouchControls" aria-label="Tetris touch controls">
                 <div class="gesture-card">
