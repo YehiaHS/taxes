@@ -26,12 +26,10 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background:
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 50px 50px;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
     pointer-events: none;
     z-index: 0;
+    opacity: 0.4;
 }
 
 .app-shell {
@@ -94,6 +92,20 @@ body::before {
 .nav-links a.active {
     color: #bbf7d0;
     border-color: #bbf7d0;
+    text-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+    animation: navPulse 2s infinite;
+}
+
+@keyframes navPulse {
+
+    0%,
+    100% {
+        text-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+    }
+
+    50% {
+        text-shadow: 0 0 20px rgba(34, 197, 94, 0.9);
+    }
 }
 
 .cta-link {
@@ -111,8 +123,9 @@ body::before {
 }
 
 .cta-link:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 26px rgba(34, 197, 94, 0.35);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 14px 26px rgba(34, 197, 94, 0.45);
+    filter: brightness(1.1);
 }
 
 .game-container {
@@ -129,6 +142,88 @@ body::before {
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     z-index: 1;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hub-card {
+    background: rgba(20, 25, 45, 0.6);
+    backdrop-filter: blur(12px);
+    padding: 24px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.hub-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.hub-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: rgba(34, 197, 94, 0.4);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(34, 197, 94, 0.15);
+}
+
+.hub-card:hover::before {
+    opacity: 1;
+}
+
+.hub-card h3 {
+    color: #4ade80;
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.hub-card p {
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.hub-hero {
+    text-align: center;
+    margin-bottom: 12px;
+    padding: 20px;
+}
+
+.hub-hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, #bbf7d0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 40px rgba(34, 197, 94, 0.3);
+}
+
+.hub-hero p {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
 }
 
 .game-layout {
@@ -154,17 +249,21 @@ body::before {
     .game-layout {
         grid-template-columns: minmax(0, 1fr);
     }
+
     .game-layout .side-panel {
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
     }
+
     .game-layout .right-panel {
         order: 3;
     }
+
     .hide-on-mobile {
         display: none;
     }
+
     .mobile-stats-grid {
         display: grid;
     }
@@ -175,38 +274,47 @@ body::before {
         padding: 12px 8px;
         align-items: stretch;
     }
+
     .app-shell {
         width: 100%;
     }
+
     .app-header {
         flex-direction: column;
         align-items: stretch;
         padding: 10px 16px;
         border-radius: 16px;
     }
+
     .nav-links {
         width: 100%;
         justify-content: space-between;
         overflow-x: auto;
     }
+
     .cta-link {
         width: 100%;
         text-align: center;
     }
+
     .game-container {
         padding: 16px;
         border-radius: 18px;
     }
+
     .brand-title {
         font-size: 0.95rem;
     }
+
     .nav-links a {
         font-size: 0.8rem;
         padding-bottom: 2px;
     }
+
     .main-game {
         gap: 12px;
     }
+
     .runner-layout {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -216,32 +324,41 @@ body::before {
     .controls-grid {
         grid-template-columns: 1fr;
     }
+
     .status-badges {
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     }
+
     .nav-links {
         gap: 10px;
     }
+
     .panel-section {
         padding: 10px;
     }
+
     .main-game .pill {
         padding: 10px 12px;
     }
+
     .gesture-card {
         padding: 14px 16px;
     }
+
     .gesture-list li {
         flex-direction: column;
         align-items: flex-start;
         gap: 4px;
     }
+
     .tetris-column {
         min-width: 105px;
     }
+
     .mini-panel {
         padding: 10px 10px 12px;
     }
+
     .mobile-stats-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -251,19 +368,24 @@ body::before {
     .mini-panel canvas {
         max-width: 120px;
     }
+
     .gesture-card h3 {
         font-size: 0.85rem;
         letter-spacing: 0.18em;
     }
+
     .gesture-list strong {
         font-size: 0.8rem;
     }
+
     .gesture-list span {
         font-size: 0.75rem;
     }
+
     .tetris-column {
         min-width: 92px;
     }
+
     .compact-mode .fuckass-btn {
         font-size: 0.7rem;
         padding: 8px 10px;
@@ -323,8 +445,15 @@ body::before {
 }
 
 @keyframes titleFloat {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-5px); }
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
 }
 
 .achievement-notification {
@@ -337,7 +466,7 @@ body::before {
     padding: 20px 24px;
     border-radius: 16px;
     border: 1px solid rgba(251, 191, 36, 0.3);
-    box-shadow: 
+    box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.4),
         0 0 60px rgba(251, 191, 36, 0.3);
     z-index: 1000;
@@ -346,20 +475,34 @@ body::before {
 }
 
 @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 @keyframes titlePulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
 }
 
 canvas {
     border: 2px solid rgba(34, 197, 94, 0.35);
     border-radius: 16px;
     background: linear-gradient(135deg, #0f1419 0%, #1a1f35 100%);
-    box-shadow: 
+    box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.4),
         0 0 0 1px rgba(255, 255, 255, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -383,6 +526,7 @@ canvas {
     .tetris-stage {
         gap: 12px;
     }
+
     .tetris-column {
         min-width: 120px;
     }
@@ -391,7 +535,7 @@ canvas {
 #gameCanvas {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    box-shadow: 
+    box-shadow:
         0 14px 46px rgba(0, 0, 0, 0.6),
         0 0 90px rgba(34, 197, 94, 0.18),
         0 0 0 1px rgba(22, 163, 74, 0.4);
@@ -411,7 +555,7 @@ canvas {
     border-radius: 16px;
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 
+    box-shadow:
         0 4px 20px rgba(0, 0, 0, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -419,7 +563,7 @@ canvas {
 
 .panel-section:hover {
     transform: translateY(-2px);
-    box-shadow: 
+    box-shadow:
         0 6px 24px rgba(0, 0, 0, 0.4),
         0 0 30px rgba(138, 43, 226, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -566,9 +710,11 @@ canvas {
         grid-template-columns: minmax(190px, 1fr) minmax(340px, auto) minmax(190px, 1fr);
         gap: 24px;
     }
+
     .tetris-column {
         min-width: 190px;
     }
+
     #gameCanvas {
         width: 340px;
     }
@@ -579,9 +725,11 @@ canvas {
         grid-template-columns: minmax(210px, 1fr) minmax(380px, auto) minmax(210px, 1fr);
         max-width: 1100px;
     }
+
     .tetris-column {
         min-width: 210px;
     }
+
     #gameCanvas {
         width: 380px;
     }
@@ -780,9 +928,19 @@ canvas {
 }
 
 @keyframes wobble {
-    0%, 100% { transform: scale(1, 1); }
-    25% { transform: scale(1.05, 0.95); }
-    75% { transform: scale(0.95, 1.05); }
+
+    0%,
+    100% {
+        transform: scale(1, 1);
+    }
+
+    25% {
+        transform: scale(1.05, 0.95);
+    }
+
+    75% {
+        transform: scale(0.95, 1.05);
+    }
 }
 
 #combo {
@@ -793,8 +951,17 @@ canvas {
 }
 
 @keyframes comboFlash {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.15); }
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.15);
+    }
 }
 
 #nextCanvas {
@@ -822,7 +989,7 @@ canvas {
     display: none;
     z-index: 1000;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 
+    box-shadow:
         0 20px 60px rgba(0, 0, 0, 0.8),
         0 0 100px rgba(239, 68, 68, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -1026,6 +1193,7 @@ canvas {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
@@ -1060,7 +1228,7 @@ canvas {
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 
+    box-shadow:
         0 4px 20px rgba(139, 92, 246, 0.4),
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -1071,7 +1239,7 @@ canvas {
 #restartButton:hover {
     transform: translateY(-2px);
     background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
-    box-shadow: 
+    box-shadow:
         0 8px 30px rgba(139, 92, 246, 0.6),
         0 0 0 1px rgba(255, 255, 255, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -1079,7 +1247,7 @@ canvas {
 
 #restartButton:active {
     transform: translateY(0);
-    box-shadow: 
+    box-shadow:
         0 2px 10px rgba(139, 92, 246, 0.4),
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -1107,22 +1275,27 @@ canvas {
         flex-direction: column;
         width: 100%;
     }
+
     h1 {
         font-size: 1.5em;
     }
+
     .compact-mode .fuckass-btn {
         font-size: 0.75rem;
         padding: 10px 12px;
     }
+
     .tetris-stage {
         display: flex;
         align-items: flex-start;
         justify-content: center;
         gap: 12px;
     }
-    .tetris-stage > * {
+
+    .tetris-stage>* {
         flex: 0 0 auto;
     }
+
     #gameCanvas {
         width: 300px;
         min-width: 300px;
@@ -1141,7 +1314,7 @@ canvas {
     font-weight: 700;
     font-size: 0.95em;
     cursor: pointer;
-    box-shadow: 
+    box-shadow:
         0 4px 20px rgba(236, 72, 153, 0.4),
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -1152,7 +1325,7 @@ canvas {
 
 .fuckass-btn:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 
+    box-shadow:
         0 8px 30px rgba(34, 197, 94, 0.55),
         0 0 40px rgba(22, 163, 74, 0.4),
         0 0 0 1px rgba(255, 255, 255, 0.12),
@@ -1165,18 +1338,21 @@ canvas {
 }
 
 @keyframes fuckassNotif {
-    0% { 
+    0% {
         transform: scale(0) rotate(0deg);
         opacity: 0;
     }
+
     10% {
         transform: scale(1.5) rotate(180deg);
         opacity: 1;
     }
+
     90% {
         transform: scale(1) rotate(360deg);
         opacity: 1;
     }
+
     100% {
         transform: scale(0) rotate(720deg);
         opacity: 0;
@@ -1189,36 +1365,46 @@ canvas {
 
 /* Stupid but good design elements */
 body.fuckass-mode {
-    background: repeating-linear-gradient(
-        45deg,
-        #22c55e,
-        #22c55e 10px,
-        #16a34a 10px,
-        #16a34a 20px,
-        #bbf7d0 20px,
-        #bbf7d0 30px,
-        #86efac 30px,
-        #86efac 40px
-    );
+    background: repeating-linear-gradient(45deg,
+            #22c55e,
+            #22c55e 10px,
+            #16a34a 10px,
+            #16a34a 20px,
+            #bbf7d0 20px,
+            #bbf7d0 30px,
+            #86efac 30px,
+            #86efac 40px);
     animation: fuckassBackground 5s linear infinite;
 }
 
 @keyframes fuckassBackground {
-    0% { filter: hue-rotate(0deg); }
-    100% { filter: hue-rotate(360deg); }
+    0% {
+        filter: hue-rotate(0deg);
+    }
+
+    100% {
+        filter: hue-rotate(360deg);
+    }
 }
 
 body.fuckass-mode .game-container {
     animation: fuckassWobble 0.5s infinite;
     border: 3px solid #ff00ff;
-    box-shadow: 
+    box-shadow:
         0 20px 60px rgba(0, 0, 0, 0.5),
         0 0 100px rgba(255, 0, 255, 0.5);
 }
 
 @keyframes fuckassWobble {
-    0%, 100% { transform: rotate(-1deg); }
-    50% { transform: rotate(1deg); }
+
+    0%,
+    100% {
+        transform: rotate(-1deg);
+    }
+
+    50% {
+        transform: rotate(1deg);
+    }
 }
 
 body.fuckass-mode h1 {
@@ -1227,11 +1413,30 @@ body.fuckass-mode h1 {
 }
 
 @keyframes fuckassTitle {
-    0% { color: #ff0000; transform: scale(1); }
-    25% { color: #00ff00; transform: scale(1.1); }
-    50% { color: #0000ff; transform: scale(0.9); }
-    75% { color: #ffff00; transform: scale(1.05); }
-    100% { color: #ff00ff; transform: scale(1); }
+    0% {
+        color: #ff0000;
+        transform: scale(1);
+    }
+
+    25% {
+        color: #00ff00;
+        transform: scale(1.1);
+    }
+
+    50% {
+        color: #0000ff;
+        transform: scale(0.9);
+    }
+
+    75% {
+        color: #ffff00;
+        transform: scale(1.05);
+    }
+
+    100% {
+        color: #ff00ff;
+        transform: scale(1);
+    }
 }
 
 #fuckassButton {
@@ -1248,6 +1453,13 @@ body.fuckass-mode h1 {
 }
 
 @keyframes fuckassButtonPulse {
-    0%, 100% { filter: hue-rotate(0deg) brightness(1); }
-    50% { filter: hue-rotate(180deg) brightness(1.2); }
+
+    0%,
+    100% {
+        filter: hue-rotate(0deg) brightness(1);
+    }
+
+    50% {
+        filter: hue-rotate(180deg) brightness(1.2);
+    }
 }
