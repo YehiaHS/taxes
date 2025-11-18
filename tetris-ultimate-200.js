@@ -315,6 +315,12 @@ let socialFeatures = false;
 let streamingIntegration = false;
 let tournamentSystem = false;
 
+const NETWORK_STORAGE_KEY = 'tetrisUltimateCloudSlots';
+const NETWORK_SOCIAL_FEED_LIMIT = 12;
+const NETWORK_SERVER_REGIONS = ['NA-East', 'NA-West', 'EU', 'EU-West', 'APAC', 'SA', 'OCE'];
+const NETWORK_PLATFORM_POOL = ['PC', 'Console', 'Mobile', 'Arcade', 'Fridge'];
+let networkManager = null;
+
 // Feature 231-240: Advanced AI
 let neuralNetwork = null;
 let machineLearning = false;
@@ -527,11 +533,461 @@ function initEconomySystem() {
 }
 
 function initNetworkFeatures() {
-    if (multiplayerMode) {
-        // Initialize networking
-        networkConnected = true;
+    if (!networkManager) {
+        networkManager = createNetworkManager();
+    }
+    networkManager.boot({ enableMultiplayer: multiplayerMode });
+    if (typeof window !== 'undefined') {
+        window.tetrisNetwork = networkManager;
+    }
+    if (!playerId) {
         playerId = 'player_' + Math.random().toString(36).substr(2, 9);
     }
+}
+
+function createNetworkManager() {
+    const state = {
+        connected: false,
+        latency: 0,
+        lastLatencySample: 0,
+        matchmaking: {
+            active: false,
+            eta: 0,
+            deadline: 0,
+            preferences: null,
+            resolve: null,
+            reject: null,
+            lastMatch: null,
+            remaining: 0
+        },
+        servers: [],
+        customServers: [],
+        mods: [],
+        workshopItems: [],
+        cloudSlots: {},
+        socialFeed: [],
+        streaming: {
+            live: false,
+            provider: null,
+            viewers: 0,
+            startedAt: 0
+        },
+        tournaments: []
+    };
+    const listeners = new Map();
+
+    function boot(options = {}) {
+        enableFeatureFlags();
+        if (!state.connected) {
+            connect();
+        }
+        refreshServerList();
+        loadCloudSlots();
+        if (options.enableMultiplayer && !state.tournaments.length) {
+            enrollTournament('Ranked Sprint Cup', 'classic');
+        }
+    }
+
+    function enableFeatureFlags() {
+        matchmaking = true;
+        serverBrowser = true;
+        customServers = true;
+        modSupport = true;
+        workshopIntegration = true;
+        cloudSaves = true;
+        crossPlatform = true;
+        socialFeatures = true;
+        streamingIntegration = true;
+        tournamentSystem = true;
+    }
+
+    function connect() {
+        state.connected = true;
+        networkConnected = true;
+        state.latency = randomLatency();
+        emit('connected', { latency: state.latency });
+    }
+
+    function randomLatency() {
+        return randomInRange(55, 150);
+    }
+
+    function randomInRange(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pickRandom(list) {
+        return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function emit(event, payload) {
+        if (!listeners.has(event)) return;
+        for (const handler of listeners.get(event)) {
+            try {
+                handler(payload);
+            } catch (error) {
+                console.error('Network listener error', error);
+            }
+        }
+    }
+
+    function on(event, handler) {
+        if (!listeners.has(event)) {
+            listeners.set(event, new Set());
+        }
+        listeners.get(event).add(handler);
+        return () => off(event, handler);
+    }
+
+    function off(event, handler) {
+        if (!listeners.has(event)) return;
+        listeners.get(event).delete(handler);
+    }
+
+    function refreshServerList() {
+        state.servers = Array.from({ length: 6 }, (_, index) => ({
+            id: 'srv-' + (index + 1),
+            name: `Ultimate ${index + 1}`,
+            region: NETWORK_SERVER_REGIONS[index % NETWORK_SERVER_REGIONS.length],
+            ping: randomInRange(35, 200),
+            players: randomInRange(12, 100),
+            capacity: 100,
+            modded: Math.random() < 0.3,
+            featured: Math.random() < 0.15
+        }));
+        emit('server-list', state.servers.slice());
+        return state.servers;
+    }
+
+    function loadCloudSlots() {
+        if (typeof localStorage === 'undefined') return;
+        try {
+            const saved = localStorage.getItem(NETWORK_STORAGE_KEY);
+            if (saved) {
+                state.cloudSlots = JSON.parse(saved);
+            }
+        } catch (error) {
+            console.warn('Unable to load cloud saves', error);
+        }
+    }
+
+    function persistCloudSlots() {
+        if (typeof localStorage === 'undefined') return;
+        try {
+            localStorage.setItem(NETWORK_STORAGE_KEY, JSON.stringify(state.cloudSlots));
+        } catch (error) {
+            console.warn('Unable to persist cloud saves', error);
+        }
+    }
+
+    function queueMatchmaking(preferences = {}) {
+        if (state.matchmaking.active) {
+            return Promise.reject(new Error('Already searching for a match'));
+        }
+        const eta = randomInRange(2500, 6000);
+        state.matchmaking = {
+            ...state.matchmaking,
+            active: true,
+            eta,
+            deadline: Date.now() + eta,
+            preferences,
+            remaining: eta,
+            resolve: null,
+            reject: null,
+            lastMatch: null
+        };
+        const promise = new Promise((resolve, reject) => {
+            state.matchmaking.resolve = resolve;
+            state.matchmaking.reject = reject;
+        });
+        emit('matchmaking-started', { ...state.matchmaking });
+        return promise;
+    }
+
+    function cancelMatchmaking(reason = 'cancelled') {
+        if (!state.matchmaking.active) return;
+        state.matchmaking.active = false;
+        state.matchmaking.reject?.(new Error(`Matchmaking ${reason}`));
+        state.matchmaking.resolve = null;
+        state.matchmaking.reject = null;
+        emit('matchmaking-cancelled');
+    }
+
+    function completeMatchmaking() {
+        if (!state.matchmaking.active) return state.matchmaking.lastMatch;
+        const opponent = createOpponentProfile(state.matchmaking.preferences);
+        const server = pickBestServer(state.matchmaking.preferences?.region);
+        const session = {
+            opponent,
+            server,
+            crossPlatform: pickRandom(NETWORK_PLATFORM_POOL),
+            startedAt: Date.now()
+        };
+        state.matchmaking.active = false;
+        state.matchmaking.lastMatch = session;
+        state.matchmaking.resolve?.(session);
+        state.matchmaking.resolve = null;
+        state.matchmaking.reject = null;
+        emit('match-found', session);
+        shareSocialUpdate(`Matched with ${opponent.name}`, {
+            type: 'matchmaking',
+            opponent,
+            server
+        });
+        return session;
+    }
+
+    function createOpponentProfile(preferences = {}) {
+        const names = ['HexDrop', 'StackLord', 'QuantumL', 'Cascade', 'SpinMaster', 'GravityWell'];
+        return {
+            id: 'op_' + Math.random().toString(36).substr(2, 9),
+            name: preferences.alias || pickRandom(names),
+            rating: randomInRange(900, 2500),
+            platform: pickRandom(NETWORK_PLATFORM_POOL),
+            streak: randomInRange(-5, 10)
+        };
+    }
+
+    function pickBestServer(regionPreference) {
+        if (!state.servers.length) refreshServerList();
+        if (regionPreference) {
+            const preferred = state.servers.filter(server => server.region === regionPreference);
+            if (preferred.length) return preferred.sort((a, b) => a.ping - b.ping)[0];
+        }
+        return state.servers.sort((a, b) => a.ping - b.ping)[0];
+    }
+
+    function createCustomServer(config = {}) {
+        const server = {
+            id: 'custom-' + (state.customServers.length + 1),
+            name: config.name || `${playerId || 'local'}'s Room`,
+            region: config.region || pickRandom(NETWORK_SERVER_REGIONS),
+            ping: randomInRange(25, 80),
+            capacity: config.capacity || 8,
+            players: 1,
+            rules: {
+                mode: config.mode || gameMode,
+                speed: config.speed || level,
+                fuckass: !!config.fuckass
+            }
+        };
+        state.customServers.push(server);
+        state.servers.unshift(server);
+        emit('custom-server-created', server);
+        shareSocialUpdate(`Hosted ${server.name} in ${server.region}`, { type: 'server', server });
+        return server;
+    }
+
+    function installMod(modName, author = 'Community') {
+        const mod = {
+            id: 'mod-' + Math.random().toString(36).substr(2, 9),
+            name: modName,
+            author,
+            installedAt: Date.now()
+        };
+        state.mods.push(mod);
+        emit('mod-installed', mod);
+        shareSocialUpdate(`Installed mod ${modName}`, { type: 'mod', mod });
+        return mod;
+    }
+
+    function publishWorkshopItem(item) {
+        const workshopItem = {
+            id: item?.id || 'workshop-' + Math.random().toString(36).substr(2, 9),
+            name: item?.name || 'Untitled Creation',
+            author: item?.author || (playerId || 'player'),
+            downloads: randomInRange(10, 5000)
+        };
+        state.workshopItems.push(workshopItem);
+        emit('workshop-update', workshopItem);
+        shareSocialUpdate(`Shared ${workshopItem.name} to the workshop`, { type: 'workshop', workshopItem });
+        return workshopItem;
+    }
+
+    function saveCloudSlot(slot = 'autosave', snapshot = createNetworkSnapshot()) {
+        state.cloudSlots[slot] = snapshot;
+        persistCloudSlots();
+        emit('cloud-save', { slot, snapshot });
+        shareSocialUpdate(`Saved progress to ${slot}`, { type: 'cloud-save', slot });
+        return snapshot;
+    }
+
+    function loadCloudSlot(slot = 'autosave') {
+        const snapshot = state.cloudSlots[slot] || null;
+        emit('cloud-load', { slot, snapshot });
+        return snapshot;
+    }
+
+    function shareSocialUpdate(message, metadata = {}) {
+        const entry = {
+            id: 'social-' + Math.random().toString(36).substr(2, 9),
+            message,
+            metadata,
+            timestamp: Date.now()
+        };
+        state.socialFeed.unshift(entry);
+        state.socialFeed = state.socialFeed.slice(0, NETWORK_SOCIAL_FEED_LIMIT);
+        emit('social-update', entry);
+        return entry;
+    }
+
+    function startStream(provider = 'StreamLink') {
+        state.streaming = {
+            live: true,
+            provider,
+            viewers: randomInRange(5, 40),
+            startedAt: Date.now()
+        };
+        emit('stream-started', { ...state.streaming });
+        shareSocialUpdate(`Started streaming on ${provider}`, { type: 'stream', provider });
+        return state.streaming;
+    }
+
+    function stopStream() {
+        if (!state.streaming.live) return;
+        state.streaming.live = false;
+        emit('stream-stopped');
+        shareSocialUpdate('Ended the live stream', { type: 'stream-end' });
+    }
+
+    function enrollTournament(name = 'Community Circuit', mode = gameMode) {
+        const tournament = {
+            id: 'tour-' + Math.random().toString(36).substr(2, 9),
+            name,
+            mode,
+            rounds: randomInRange(3, 5),
+            progress: 0,
+            nextMatchIn: randomInRange(45000, 90000),
+            completed: false
+        };
+        state.tournaments.push(tournament);
+        shareSocialUpdate(`Joined ${name} (${mode})`, { type: 'tournament', tournament });
+        emit('tournament-joined', tournament);
+        return tournament;
+    }
+
+    function advanceTournaments(deltaTime) {
+        state.tournaments.forEach(tournament => {
+            if (tournament.completed) return;
+            tournament.nextMatchIn -= deltaTime;
+            if (tournament.nextMatchIn <= 0) {
+                resolveTournamentMatch(tournament);
+                tournament.nextMatchIn = randomInRange(45000, 90000);
+            }
+        });
+        state.tournaments = state.tournaments.filter(t => !t.completed);
+    }
+
+    function resolveTournamentMatch(tournament) {
+        tournament.progress += 1;
+        const result = Math.random() > 0.3 ? 'win' : 'loss';
+        shareSocialUpdate(`${result === 'win' ? 'Won' : 'Lost'} a match in ${tournament.name}`, {
+            type: 'tournament-match',
+            tournament,
+            result
+        });
+        emit('tournament-match', { tournament, result });
+        if (tournament.progress >= tournament.rounds) {
+            tournament.completed = true;
+            shareSocialUpdate(`Finished ${tournament.name}${result === 'win' ? ' in first place!' : ''}`, {
+                type: 'tournament-complete',
+                tournament
+            });
+        }
+    }
+
+    function recordMatchResult(result = {}) {
+        const finalScore = typeof result.score === 'number' ? result.score : score;
+        const finalLevel = typeof result.level === 'number' ? result.level : level;
+        saveCloudSlot('autosave', createNetworkSnapshot(result));
+        shareSocialUpdate(`Scored ${finalScore.toLocaleString()} pts (Lv.${finalLevel})`, {
+            type: 'match-result',
+            result
+        });
+        emit('match-result', result);
+    }
+
+    function recordLineClear(event) {
+        if (!event || (event.linesCleared < 4 && !event.isTSpin)) return;
+        const label = event.isTSpin ? 'T-Spin highlight' : 'Tetris clear';
+        shareSocialUpdate(`${label} • ${event.linesCleared} lines`, {
+            type: 'highlight',
+            event
+        });
+    }
+
+    function tick(deltaTime) {
+        if (!state.connected) return;
+        state.lastLatencySample += deltaTime;
+        if (state.lastLatencySample >= 5000) {
+            state.latency = Math.max(40, Math.min(220, state.latency + randomInRange(-15, 15)));
+            state.lastLatencySample = 0;
+            emit('latency-updated', state.latency);
+        }
+        updateMatchmakingCountdown();
+        updateStreamingStats();
+        advanceTournaments(deltaTime);
+    }
+
+    function updateMatchmakingCountdown() {
+        if (!state.matchmaking.active) return;
+        state.matchmaking.remaining = Math.max(0, state.matchmaking.deadline - Date.now());
+        emit('matchmaking-tick', { remaining: state.matchmaking.remaining });
+        if (state.matchmaking.remaining <= 0) {
+            completeMatchmaking();
+        }
+    }
+
+    function updateStreamingStats() {
+        if (!state.streaming.live) return;
+        state.streaming.viewers = Math.max(0, state.streaming.viewers + randomInRange(-2, 4));
+        emit('stream-metrics', { viewers: state.streaming.viewers });
+    }
+
+    function getState() {
+        return JSON.parse(JSON.stringify(state));
+    }
+
+    return {
+        boot,
+        on,
+        off,
+        queueMatchmaking,
+        cancelMatchmaking,
+        refreshServerList,
+        createCustomServer,
+        installMod,
+        publishWorkshopItem,
+        saveCloudSlot,
+        loadCloudSlot,
+        shareSocialUpdate,
+        startStream,
+        stopStream,
+        enrollTournament,
+        recordMatchResult,
+        recordLineClear,
+        tick,
+        getState
+    };
+}
+
+function createNetworkSnapshot(extra = {}) {
+    return {
+        timestamp: Date.now(),
+        playerId,
+        score,
+        level,
+        lines,
+        combo,
+        maxCombo,
+        gameMode,
+        fuckassMode,
+        softbodyMode,
+        theme,
+        currency,
+        stats: JSON.parse(JSON.stringify(stats)),
+        extra
+    };
 }
 
 function initAISystem() {
@@ -1228,6 +1684,16 @@ function clearLines() {
         } else if (isTSpin) {
             createTSpinEffect();
         }
+
+        if (networkManager) {
+            networkManager.recordLineClear({
+                linesCleared,
+                isTSpin,
+                combo,
+                level,
+                score
+            });
+        }
         
         // Animate line clear with enhanced effects
         animateLineClear(clearedRows);
@@ -1678,6 +2144,9 @@ function updateAI(deltaTime) {
 }
 
 function updateNetwork(deltaTime) {
+    if (networkManager) {
+        networkManager.tick(deltaTime);
+    }
     if (multiplayerMode && networkConnected) {
         // Update multiplayer state
         syncWithServer();
@@ -2343,6 +2812,15 @@ function endGame() {
     
     // Save stats
     saveSettings();
+    if (networkManager) {
+        networkManager.recordMatchResult({
+            score,
+            level,
+            lines,
+            combo: maxCombo,
+            duration: Date.now() - gameStartTime
+        });
+    }
     
     console.log('Game Over! Final Score:', score);
 }
