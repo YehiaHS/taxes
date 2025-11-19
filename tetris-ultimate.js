@@ -172,6 +172,19 @@ function init() {
     gameLoop();
 }
 
+// --- INITIALIZATION UPDATES ---
+function initNetworkFeatures() {
+    State.networkManager = new NetworkManager();
+    State.networkManager.init();
+
+    // Bind UI
+    document.getElementById('hostBtn').addEventListener('click', () => State.networkManager.hostGame());
+    document.getElementById('joinBtn').addEventListener('click', () => {
+        const code = document.getElementById('joinInput').value;
+        State.networkManager.joinGame(code);
+    });
+}
+
 // Feature 101: Save/Load System
 function saveSettings() {
     const settings = {
@@ -1014,6 +1027,11 @@ function gameLoop(time = 0) {
         currentPiece.color = COLORS.RAINBOW[colorIndex];
     }
     
+    // Broadcast state every few frames or on change (throttled)
+    if (State.multiplayerMode && State.networkManager && Math.floor(time) % 5 === 0) { // Simple throttle
+        State.networkManager.broadcastState();
+    }
+
     draw();
     animationId = requestAnimationFrame(gameLoop);
 }
@@ -1075,29 +1093,60 @@ class NetworkManager {
     }
 
     init() {
-        const peer = new Peer({
-            key: 'peerjs',
-            host: 'your-server.com',
-            port: 9000,
-            path: '/myapp'
-        });
+        // Generate a short random ID for easier sharing
+        const shortId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        this.peer = new Peer(shortId);
 
-        peer.on('open', (id) => {
-            document.getElementById('lobbyId').textContent = id;
-            if (this.isHost) {
-                document.getElementById('hostStatus').textContent = 'Waiting for opponent...';
+        this.peer.on('open', (id) => {
+            this.peerId = id;
+            console.log('My peer ID is: ' + id);
+
+            // Auto-join if URL has code
+            const urlParams = new URLSearchParams(window.location.search);
+            const joinCode = urlParams.get('join');
+            if (joinCode) {
+                this.joinGame(joinCode);
             }
         });
 
-        peer.on('connection', (conn) => {
+        this.peer.on('connection', (conn) => {
             this.handleConnection(conn);
         });
 
-        document.getElementById('joinButton').addEventListener('click', () => {
-            const peerId = document.getElementById('peerIdInput').value;
-            const conn = peer.connect(peerId);
-            this.handleConnection(conn);
+        this.peer.on('error', (err) => {
+            console.error('PeerJS Error:', err);
+            alert('Multiplayer Error: ' + err.type);
         });
+    }
+
+    hostGame() {
+        this.isHost = true;
+        document.getElementById('hostCodeDisplay').style.display = 'flex';
+        document.getElementById('myPeerId').textContent = this.peerId;
+        document.getElementById('lobbyStatus').textContent = 'Waiting for opponent...';
+
+        // Update URL for easy sharing
+        const shareUrl = `${window.location.origin}${window.location.pathname}?join=${this.peerId}`;
+        window.history.pushState({}, '', `?join=${this.peerId}`);
+
+        // Create a share button
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'secondary-btn';
+        shareBtn.textContent = '🔗 Copy Link';
+        shareBtn.onclick = () => {
+            navigator.clipboard.writeText(shareUrl);
+            shareBtn.textContent = '✅ Copied!';
+            setTimeout(() => shareBtn.textContent = '🔗 Copy Link', 2000);
+        };
+        document.getElementById('hostCodeDisplay').appendChild(shareBtn);
+    }
+
+    joinGame(hostId) {
+        if (!hostId) return;
+        this.isHost = false;
+        document.getElementById('lobbyStatus').textContent = 'Connecting...';
+        const conn = this.peer.connect(hostId.toUpperCase());
+        this.handleConnection(conn);
     }
 
     handleConnection(conn) {
@@ -1136,29 +1185,117 @@ class NetworkManager {
         }
     }
 
-    handleData(data) {
-        switch (data.type) {
-            case 'START_GAME':
-                restart();
-                break;
-            case 'STATE_UPDATE':
-                this.renderOpponent(data.payload);
-                break;
-            case 'GARBAGE_LINES':
-                this.receiveGarbage(data.count);
-                break;
-            case 'GAME_OVER':
-                this.handleOpponentGameOver();
-                break;
-            case 'REMATCH':
-                if (confirm('Opponent wants a rematch! Accept?')) {
-                    this.sendData({ type: 'START_GAME' });
-                    restart();
-                }
-                break;
+    sendGarbage(linesCleared) {
+        if (!State.multiplayerMode || !this.conn) return;
+        // Classic Tetris garbage rules:
+        // 2 lines -> 1 garbage
+        // 3 lines -> 2 garbage
+        // 4 lines -> 4 garbage
+        let garbageCount = 0;
+        if (linesCleared === 2) garbageCount = 1;
+        else if (linesCleared === 3) garbageCount = 2;
+        else if (linesCleared === 4) {
+            garbageCount = 4;
+        }
+
+        if (garbageCount > 0) {
+            this.sendData({ type: 'GARBAGE_LINES', count: garbageCount });
+            createFuckassNotification(`SENT ${garbageCount} GARBAGE!`);
         }
     }
+
+    receiveGarbage(count) {
+        createFuckassNotification(`WARNING: ${count} GARBAGE INCOMING!`);
+        // Add garbage lines to the bottom
+        for (let i = 0; i < count; i++) {
+            // Remove top line (game over check handled elsewhere)
+            board.shift();
+            // Add garbage line at bottom with one random hole
+            const hole = Math.floor(Math.random() * COLS);
+            const row = Array(COLS).fill('#888'); // Grey garbage blocks
+            row[hole] = 0;
+            board.push(row);
+        }
+    }
+
+    handleOpponentGameOver() {
+        gameOver = true;
+        createFuckassNotification('🏆 YOU WON!');
+        // Show custom multiplayer game over
+        document.getElementById('gameOverOverlay').classList.add('show');
+        document.querySelector('#gameOverOverlay h2').textContent = 'YOU WON!';
+        document.getElementById('restartButton').textContent = 'REMATCH';
+        document.getElementById('restartButton').onclick = () => {
+            this.sendData({ type: 'REMATCH' });
+            document.getElementById('gameOverOverlay').classList.remove('show');
+            createFuckassNotification('Waiting for opponent...');
+        };
+    }
+
+    // Send local state to opponent
+    broadcastState() {
+        if (!State.multiplayerMode || !this.conn) return;
+
+        // Compress board: only send non-zero cells
+        const simplifiedBoard = board.map(row => row.map(cell => cell ? cell : 0));
+
+        this.sendData({
+            type: 'STATE_UPDATE',
+            payload: {
+                board: simplifiedBoard,
+                score: score,
+                piece: currentPiece
+            }
+        });
+    }
+
+    renderOpponent(data) {
+        const canvas = document.getElementById('opponentCanvas');
+        const ctx = canvas.getContext('2d');
+        const scale = canvas.width / (COLS * BLOCK_SIZE); // Scale down
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.scale(scale, scale);
+
+        // Draw Board
+        data.board.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value) {
+                    ctx.fillStyle = value; // Use color string directly
+                    ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+                    ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                }
+            });
+        });
+
+        // Draw Active Piece
+        if (data.piece) {
+            ctx.fillStyle = data.piece.color;
+            data.piece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        ctx.fillRect((data.piece.x + x) * BLOCK_SIZE, (data.piece.y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                });
+            });
+        }
+
+        ctx.restore();
+        document.getElementById('oppScore').textContent = data.score;
+    }
 }
+
+// Hook into Game Loop
+// const originalUpdate = update;
+// update = function (time = 0) {
+//     originalUpdate(time);
+//     // Broadcast state every few frames or on change (throttled)
+//     if (State.multiplayerMode && time % 5 === 0) { // Simple throttle
+//         State.networkManager.broadcastState();
+//     }
+// };
 
 // Start game
 window.addEventListener('load', init);
