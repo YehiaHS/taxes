@@ -174,14 +174,14 @@ function init() {
 
 // --- INITIALIZATION UPDATES ---
 function initNetworkFeatures() {
-    State.networkManager = new NetworkManager();
-    State.networkManager.init();
+    networkManager = new NetworkManager();
+    networkManager.init();
 
     // Bind UI
-    document.getElementById('hostBtn').addEventListener('click', () => State.networkManager.hostGame());
+    document.getElementById('hostBtn').addEventListener('click', () => networkManager.hostGame());
     document.getElementById('joinBtn').addEventListener('click', () => {
         const code = document.getElementById('joinInput').value;
-        State.networkManager.joinGame(code);
+        networkManager.joinGame(code);
     });
 }
 
@@ -1028,8 +1028,8 @@ function gameLoop(time = 0) {
     }
     
     // Broadcast state every few frames or on change (throttled)
-    if (State.multiplayerMode && State.networkManager && Math.floor(time) % 5 === 0) { // Simple throttle
-        State.networkManager.broadcastState();
+    if (multiplayerMode && networkManager && Math.floor(time) % 5 === 0) { // Simple throttle
+        networkManager.broadcastState();
     }
 
     draw();
@@ -1157,7 +1157,7 @@ class NetworkManager {
             document.getElementById('lobbyStatus').textContent = 'Connected!';
             document.getElementById('lobbyUI').style.display = 'none';
             document.getElementById('opponentView').style.display = 'block';
-            State.multiplayerMode = true;
+            multiplayerMode = true;
 
             // If host, start game for both (signal start)
             if (this.isHost) {
@@ -1172,7 +1172,7 @@ class NetworkManager {
 
         this.conn.on('close', () => {
             alert('Opponent disconnected');
-            State.multiplayerMode = false;
+            multiplayerMode = false;
             document.getElementById('opponentView').style.display = 'none';
             document.getElementById('lobbyUI').style.display = 'block';
             window.history.pushState({}, '', window.location.pathname); // Clear URL
@@ -1186,7 +1186,7 @@ class NetworkManager {
     }
 
     sendGarbage(linesCleared) {
-        if (!State.multiplayerMode || !this.conn) return;
+        if (!multiplayerMode || !this.conn) return;
         // Classic Tetris garbage rules:
         // 2 lines -> 1 garbage
         // 3 lines -> 2 garbage
@@ -1234,7 +1234,7 @@ class NetworkManager {
 
     // Send local state to opponent
     broadcastState() {
-        if (!State.multiplayerMode || !this.conn) return;
+        if (!multiplayerMode || !this.conn) return;
 
         // Compress board: only send non-zero cells
         const simplifiedBoard = board.map(row => row.map(cell => cell ? cell : 0));
@@ -1299,3 +1299,6 @@ class NetworkManager {
 
 // Start game
 window.addEventListener('load', init);
+
+let multiplayerMode = false;
+let networkManager = null;
