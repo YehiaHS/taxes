@@ -287,6 +287,11 @@ function merge() {
     
     if (particlesEnabled) createMergeParticles(mergePositions);
     if (softbodyMode) applyImpactEffect();
+    
+    if (ExtraFeatures.shakeOnDrop) {
+        screenShake = 5;
+    }
+    
     playSound('drop');
 }
 
@@ -303,7 +308,11 @@ function clearLines() {
         }
     }
     
-    if (linesCleared > 0) {
+        if (linesCleared > 0) {
+        if (ExtraFeatures.confettiOnClear) {
+            createFireworks();
+        }
+
         // Feature: Different line clear types
         if (linesCleared === 1) stats.singleLines++;
         else if (linesCleared === 2) stats.doubleLines++;
@@ -380,17 +389,30 @@ function checkPerfectClear() {
 
 // Feature 112-115: Movement with DAS
 function move(dir) {
+    if (ExtraFeatures.stickyFloor && Math.random() < 0.3) return false;
+
     currentPiece.x += dir;
     if (collision(currentPiece.x, currentPiece.y, currentPiece.shape)) {
         currentPiece.x -= dir;
         return false;
     }
+    
+    if (ExtraFeatures.icyFloor && Math.random() < 0.5) {
+        setTimeout(() => {
+            if (currentPiece && !collision(currentPiece.x + dir, currentPiece.y, currentPiece.shape)) {
+                currentPiece.x += dir;
+                draw(); // Force redraw
+            }
+        }, 100);
+    }
+
     currentPiece.lastMove = 'move';
     playSound('move');
     return true;
 }
 
 function drop() {
+    if (ExtraFeatures.zenMode) return; // No gravity in Zen Mode
     currentPiece.y++;
     if (collision(currentPiece.x, currentPiece.y, currentPiece.shape)) {
         currentPiece.y--;
@@ -1045,8 +1067,13 @@ function gameLoop(time = 0) {
         return;
     }
     
-    const deltaTime = time - lastTime;
+    let deltaTime = time - lastTime;
     lastTime = time;
+    
+    if (ExtraFeatures.timeWarp) {
+        deltaTime *= 0.5; // Slow motion
+    }
+    
     dropCounter += deltaTime;
     
     if (dropCounter > dropInterval) {
@@ -1370,15 +1397,154 @@ class NetworkManager {
     }
 }
 
-// Hook into Game Loop
-// const originalUpdate = update;
-// update = function (time = 0) {
-//     originalUpdate(time);
-//     // Broadcast state every few frames or on change (throttled)
-//     if (State.multiplayerMode && time % 5 === 0) { // Simple throttle
-//         State.networkManager.broadcastState();
-//     }
-// };
+// Feature 201-220: EXTRA FEATURES PACK
+const ExtraFeatures = {
+    fpsCounter: false,
+    zenMode: false,
+    mirrorMode: false,
+    invertColors: false,
+    sepiaMode: false,
+    pixelate: false,
+    blur: false,
+    glitchEffect: false,
+    shakeOnDrop: true,
+    confettiOnClear: true,
+    neonGlow: true,
+    retroCRT: false,
+    fishEye: false,
+    vignette: false,
+    noise: false,
+    doubleJump: false,
+    windyMode: false,
+    icyFloor: false,
+    stickyFloor: false,
+    timeWarp: false,
+    
+    // State
+    fps: 0,
+    lastFrameTime: 0,
+    windTimer: 0,
+    
+    toggle(feature) {
+        if (this.hasOwnProperty(feature)) {
+            this[feature] = !this[feature];
+            createFuckassNotification(`${feature.toUpperCase()} ${this[feature] ? 'ON' : 'OFF'}`);
+            this.applyVisuals();
+        }
+    },
+    
+    applyVisuals() {
+        const canvas = document.getElementById('gameCanvas');
+        let filters = [];
+        if (this.invertColors) filters.push('invert(100%)');
+        if (this.sepiaMode) filters.push('sepia(100%)');
+        if (this.blur) filters.push('blur(2px)');
+        if (this.neonGlow) filters.push('drop-shadow(0 0 10px var(--primary))');
+        
+        canvas.style.filter = filters.join(' ');
+        
+        if (this.mirrorMode) canvas.style.transform = 'scaleX(-1)';
+        else canvas.style.transform = 'none';
+        
+        if (this.pixelate) canvas.style.imageRendering = 'pixelated';
+    },
+    
+    update(deltaTime) {
+        // FPS Calculation
+        const now = performance.now();
+        this.fps = Math.round(1000 / (now - this.lastFrameTime));
+        this.lastFrameTime = now;
+        
+        // Windy Mode
+        if (this.windyMode && !isPaused && !gameOver) {
+            this.windTimer += deltaTime;
+            if (this.windTimer > 2000) {
+                if (Math.random() > 0.5) move(Math.random() > 0.5 ? 1 : -1);
+                this.windTimer = 0;
+            }
+        }
+        
+        // Glitch Effect
+        if (this.glitchEffect && Math.random() > 0.95) {
+            const canvas = document.getElementById('gameCanvas');
+            const x = (Math.random() - 0.5) * 10;
+            const y = (Math.random() - 0.5) * 10;
+            canvas.style.transform = `translate(${x}px, ${y}px)`;
+            setTimeout(() => canvas.style.transform = 'none', 50);
+        }
+    },
+    
+    draw(ctx) {
+        if (this.fpsCounter) {
+            ctx.fillStyle = '#0aff60';
+            ctx.font = '14px "Rajdhani"';
+            ctx.fillText(`FPS: ${this.fps}`, 10, 20);
+        }
+        
+        if (this.vignette) {
+            const gradient = ctx.createRadialGradient(
+                canvas.width/2, canvas.height/2, 100,
+                canvas.width/2, canvas.height/2, 400
+            );
+            gradient.addColorStop(0, 'transparent');
+            gradient.addColorStop(1, 'rgba(0,0,0,0.7)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        if (this.retroCRT) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            for (let i = 0; i < canvas.height; i += 4) {
+                ctx.fillRect(0, i, canvas.width, 2);
+            }
+        }
+        
+        if (this.noise) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                if (Math.random() > 0.9) {
+                    const val = Math.random() * 255;
+                    data[i] = val;
+                    data[i+1] = val;
+                    data[i+2] = val;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+    }
+};
+
+// Hook into existing functions
+const originalGameLoop = gameLoop;
+gameLoop = function(time = 0) {
+    ExtraFeatures.update(time - lastTime);
+    originalGameLoop(time);
+};
+
+const originalDraw = draw;
+draw = function() {
+    originalDraw();
+    ExtraFeatures.draw(ctx);
+};
+
+// Add keybinds for new features (Shift + Key)
+document.addEventListener('keydown', (e) => {
+    if (e.shiftKey) {
+        switch(e.key.toLowerCase()) {
+            case '1': ExtraFeatures.toggle('fpsCounter'); break;
+            case '2': ExtraFeatures.toggle('zenMode'); break;
+            case '3': ExtraFeatures.toggle('mirrorMode'); break;
+            case '4': ExtraFeatures.toggle('invertColors'); break;
+            case '5': ExtraFeatures.toggle('sepiaMode'); break;
+            case '6': ExtraFeatures.toggle('pixelate'); break;
+            case '7': ExtraFeatures.toggle('blur'); break;
+            case '8': ExtraFeatures.toggle('glitchEffect'); break;
+            case '9': ExtraFeatures.toggle('retroCRT'); break;
+            case '0': ExtraFeatures.toggle('neonGlow'); break;
+        }
+    }
+});
 
 // Start game
 window.addEventListener('load', init);
