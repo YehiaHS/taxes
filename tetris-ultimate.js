@@ -140,6 +140,8 @@ let leftPressed = false;
 let rightPressed = false;
 let dasTimer = 0;
 let lastInputTime = 0;
+let multiplayerMode = false;
+let networkManager = null;
 
 // Initialize
 function init() {
@@ -163,6 +165,7 @@ function init() {
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
     document.getElementById('restartButton')?.addEventListener('click', restart);
+    document.getElementById('fuckassButton')?.addEventListener('click', toggleFuckassMode);
     
     setupEventListeners();
     updateDisplay();
@@ -329,6 +332,10 @@ function clearLines() {
         
         // Animate line clear
         animateLineClear(clearedRows);
+
+        if (multiplayerMode && networkManager) {
+            networkManager.sendGarbage(linesCleared);
+        }
         
         setTimeout(() => {
             clearedRows.forEach(row => {
@@ -810,6 +817,36 @@ function updateDisplay() {
     if (comboEl) comboEl.textContent = combo > 1 ? `${combo}x` : '';
 }
 
+function createFuckassNotification(text) {
+    const notif = document.createElement('div');
+    notif.className = 'fuckass-notification';
+    notif.style.position = 'fixed';
+    notif.style.top = '50%';
+    notif.style.left = '50%';
+    notif.style.transform = 'translate(-50%, -50%)';
+    notif.style.color = '#ff00ff';
+    notif.style.fontSize = '48px';
+    notif.style.fontWeight = 'bold';
+    notif.style.textShadow = '2px 2px #000';
+    notif.style.zIndex = '1000';
+    notif.style.pointerEvents = 'none';
+    notif.textContent = text;
+    document.body.appendChild(notif);
+    
+    setTimeout(() => {
+        notif.remove();
+    }, 3000);
+}
+
+function toggleFuckassMode() {
+    document.body.classList.toggle('fuckass-mode');
+    if (document.body.classList.contains('fuckass-mode')) {
+        createFuckassNotification('FUCKASS MODE ACTIVATED');
+    } else {
+        createFuckassNotification('FUCKASS MODE DEACTIVATED');
+    }
+}
+
 function animateLineClear(rows) {
     rows.forEach(row => {
         for (let col = 0; col < COLS; col++) {
@@ -861,7 +898,9 @@ function handleKeyDown(e) {
         'i': () => { invisibleMode = !invisibleMode; },
         'I': () => { invisibleMode = !invisibleMode; },
         'b': () => { if (bombsAvailable > 0) useBomb(); },
-        'B': () => { if (bombsAvailable > 0) useBomb(); }
+        'B': () => { if (bombsAvailable > 0) useBomb(); },
+        'f': () => toggleFuckassMode(),
+        'F': () => toggleFuckassMode()
     };
     
     if (keyActions[e.key]) keyActions[e.key]();
@@ -1051,6 +1090,10 @@ function endGame() {
     saveSettings();
     document.getElementById('finalScore').textContent = score;
     document.getElementById('gameOverOverlay').classList.add('show');
+
+    if (multiplayerMode && networkManager) {
+        networkManager.sendData({ type: 'GAME_OVER' });
+    }
 }
 
 // Restart
@@ -1179,6 +1222,31 @@ class NetworkManager {
         });
     }
 
+    handleData(data) {
+        switch (data.type) {
+            case 'START_GAME':
+                restart();
+                break;
+            case 'STATE_UPDATE':
+                this.renderOpponent(data.payload);
+                break;
+            case 'GARBAGE_LINES':
+                this.receiveGarbage(data.count);
+                break;
+            case 'GAME_OVER':
+                this.handleOpponentGameOver();
+                break;
+            case 'REMATCH':
+                createFuckassNotification('OPPONENT WANTS REMATCH!');
+                document.getElementById('restartButton').textContent = 'ACCEPT REMATCH';
+                document.getElementById('restartButton').onclick = () => {
+                    this.sendData({ type: 'START_GAME' });
+                    restart();
+                };
+                break;
+        }
+    }
+
     sendData(data) {
         if (this.conn && this.conn.open) {
             this.conn.send(data);
@@ -1208,7 +1276,13 @@ class NetworkManager {
         createFuckassNotification(`WARNING: ${count} GARBAGE INCOMING!`);
         // Add garbage lines to the bottom
         for (let i = 0; i < count; i++) {
-            // Remove top line (game over check handled elsewhere)
+            // Check if top line has blocks - if so, GAME OVER
+            if (board[0].some(cell => cell !== 0)) {
+                endGame();
+                return;
+            }
+            
+            // Remove top line
             board.shift();
             // Add garbage line at bottom with one random hole
             const hole = Math.floor(Math.random() * COLS);
@@ -1299,6 +1373,3 @@ class NetworkManager {
 
 // Start game
 window.addEventListener('load', init);
-
-let multiplayerMode = false;
-let networkManager = null;
