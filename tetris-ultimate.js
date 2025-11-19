@@ -251,7 +251,7 @@ function collision(x, y, shape) {
             if (shape[row][col]) {
                 const newX = x + col;
                 const newY = y + row;
-                if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
+                if (newX < 0 || newX >= COLS || newY < 0 || newY >= ROWS) return true;
                 if (newY >= 0 && board[newY][newX]) return true;
             }
         }
@@ -1531,6 +1531,7 @@ draw = function() {
 // Add keybinds for new features (Shift + Key)
 document.addEventListener('keydown', (e) => {
     if (e.shiftKey) {
+        console.log('Shift key pressed with:', e.key); // DEBUG LOG
         switch(e.key.toLowerCase()) {
             case '1': ExtraFeatures.toggle('fpsCounter'); break;
             case '2': ExtraFeatures.toggle('zenMode'); break;
