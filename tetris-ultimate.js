@@ -431,9 +431,10 @@ function merge() {
 }
 
 function clearLines() {
+    // Check for lines
     let linesCleared = 0;
     for (let y = ROWS - 1; y >= 0; y--) {
-        if (State.board[y].every(c => c !== 0)) {
+        if (State.board[y].every(cell => cell !== 0)) {
             State.board.splice(y, 1);
             State.board.unshift(Array(COLS).fill(0));
             linesCleared++;
@@ -442,11 +443,22 @@ function clearLines() {
     }
 
     if (linesCleared > 0) {
-        const points = [0, 100, 300, 500, 800];
-        State.score += points[linesCleared] * State.level;
         State.lines += linesCleared;
-        State.level = Math.floor(State.lines / 10) + 1;
+        State.score += linesCleared * 100 * State.level;
         State.combo++;
+
+        // Multiplayer Garbage
+        if (State.multiplayerMode && State.networkManager) {
+            State.networkManager.sendGarbage(linesCleared);
+        }
+
+        // Level Up
+        if (State.lines >= State.level * 10) {
+            State.level++;
+            State.dropInterval = Math.max(100, 1000 - (State.level - 1) * 100);
+            // Assuming createFuckassNotification is defined elsewhere or will be added
+            // createFuckassNotification(`LEVEL UP! ${State.level}`);
+        }
 
         // Effects
         State.screenShake = linesCleared * 2;
@@ -486,6 +498,21 @@ function updateDisplay() {
 function endGame() {
     State.gameOver = true;
     if (uiElements.gameOverOverlay) uiElements.gameOverOverlay.style.display = 'flex';
+
+    // Multiplayer Notification
+    if (State.multiplayerMode && State.networkManager) {
+        State.networkManager.sendData({ type: 'GAME_OVER' });
+        document.querySelector('#gameOverOverlay h2').textContent = 'GAME OVER';
+        document.getElementById('restartButton').textContent = 'WAITING...';
+        document.getElementById('restartButton').onclick = null; // Wait for winner to rematch
+    } else {
+        document.querySelector('#gameOverOverlay h2').textContent = 'GAME OVER';
+        document.getElementById('restartButton').textContent = 'PLAY AGAIN';
+        document.getElementById('restartButton').onclick = () => {
+            resetGame();
+            document.getElementById('gameOverOverlay').style.display = 'none';
+        };
+    }
 
     // Update Stats
     document.getElementById('finalScore').textContent = State.score;
@@ -1270,6 +1297,13 @@ class NetworkManager {
         this.peer.on('open', (id) => {
             this.peerId = id;
             console.log('My peer ID is: ' + id);
+
+            // Auto-join if URL has code
+            const urlParams = new URLSearchParams(window.location.search);
+            const joinCode = urlParams.get('join');
+            if (joinCode) {
+                this.joinGame(joinCode);
+            }
         });
 
         this.peer.on('connection', (conn) => {
@@ -1287,6 +1321,21 @@ class NetworkManager {
         document.getElementById('hostCodeDisplay').style.display = 'flex';
         document.getElementById('myPeerId').textContent = this.peerId;
         document.getElementById('lobbyStatus').textContent = 'Waiting for opponent...';
+
+        // Update URL for easy sharing
+        const shareUrl = `${window.location.origin}${window.location.pathname}?join=${this.peerId}`;
+        window.history.pushState({}, '', `?join=${this.peerId}`);
+
+        // Create a share button
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'secondary-btn';
+        shareBtn.textContent = '🔗 Copy Link';
+        shareBtn.onclick = () => {
+            navigator.clipboard.writeText(shareUrl);
+            shareBtn.textContent = '✅ Copied!';
+            setTimeout(() => shareBtn.textContent = '🔗 Copy Link', 2000);
+        };
+        document.getElementById('hostCodeDisplay').appendChild(shareBtn);
     }
 
     joinGame(hostId) {
@@ -1323,6 +1372,7 @@ class NetworkManager {
             State.multiplayerMode = false;
             document.getElementById('opponentView').style.display = 'none';
             document.getElementById('lobbyUI').style.display = 'block';
+            window.history.pushState({}, '', window.location.pathname); // Clear URL
         });
     }
 
@@ -1340,10 +1390,64 @@ class NetworkManager {
             case 'STATE_UPDATE':
                 this.renderOpponent(data.payload);
                 break;
+            case 'GARBAGE_LINES':
+                this.receiveGarbage(data.count);
+                break;
             case 'GAME_OVER':
-                createFuckassNotification('OPPONENT LOST!');
+                this.handleOpponentGameOver();
+                break;
+            case 'REMATCH':
+                if (confirm('Opponent wants a rematch! Accept?')) {
+                    this.sendData({ type: 'START_GAME' });
+                    resetGame();
+                }
                 break;
         }
+    }
+
+    sendGarbage(linesCleared) {
+        if (!State.multiplayerMode || !this.conn) return;
+        // Classic Tetris garbage rules:
+        // 2 lines -> 1 garbage
+        // 3 lines -> 2 garbage
+        // 4 lines -> 4 garbage
+        let garbageCount = 0;
+        if (linesCleared === 2) garbageCount = 1;
+        else if (linesCleared === 3) garbageCount = 2;
+        else if (linesCleared === 4) garbageCount = 4;
+
+        if (garbageCount > 0) {
+            this.sendData({ type: 'GARBAGE_LINES', count: garbageCount });
+            createFuckassNotification(`SENT ${garbageCount} GARBAGE!`);
+        }
+    }
+
+    receiveGarbage(count) {
+        createFuckassNotification(`WARNING: ${count} GARBAGE INCOMING!`);
+        // Add garbage lines to the bottom
+        for (let i = 0; i < count; i++) {
+            // Remove top line (game over check handled elsewhere)
+            State.board.shift();
+            // Add garbage line at bottom with one random hole
+            const hole = Math.floor(Math.random() * COLS);
+            const row = Array(COLS).fill('#888'); // Grey garbage blocks
+            row[hole] = 0;
+            State.board.push(row);
+        }
+    }
+
+    handleOpponentGameOver() {
+        State.gameOver = true;
+        createFuckassNotification('🏆 YOU WON!');
+        // Show custom multiplayer game over
+        document.getElementById('gameOverOverlay').style.display = 'flex';
+        document.querySelector('#gameOverOverlay h2').textContent = 'YOU WON!';
+        document.getElementById('restartButton').textContent = 'REMATCH';
+        document.getElementById('restartButton').onclick = () => {
+            this.sendData({ type: 'REMATCH' });
+            document.getElementById('gameOverOverlay').style.display = 'none';
+            createFuckassNotification('Waiting for opponent...');
+        };
     }
 
     // Send local state to opponent
