@@ -1743,3 +1743,59 @@ body.fuckass-mode h1 {
     background: rgba(0, 0, 0, 0.5);
     border-radius: 8px;
 }
+/* Multiplayer Styles */
+#multiplayerSection {
+    min-height: 200px;
+}
+
+#lobbyUI {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#opponentView {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#opponentCanvas {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1/2;
+    background: #000;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lobby-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.join-form {
+    display: flex;
+    gap: 8px;
+}
+
+#joinInput {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+#joinInput:focus {
+    outline: none;
+    border-color: #4ade80;
+}
+
+#myPeerId {
+    user-select: all;
+    cursor: pointer;
+}

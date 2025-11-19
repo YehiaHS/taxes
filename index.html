@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +7,8 @@
     <link rel="prefetch" href="chess.html">
     <link rel="prefetch" href="hub.html">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
-
 <body class="page-tetris">
     <div class="app-shell">
         <header class="app-header">
@@ -24,177 +23,164 @@
         </header>
 
         <div class="game-container game-layout">
-            <!-- Left Panel -->
-            <div class="tetris-column left-stack">
-                <div class="mini-panel">
-                    <span>Hold</span>
-                    <canvas id="holdCanvas" width="120" height="120"></canvas>
-                </div>
-
-                <div class="mini-panel mode-card compact-mode">
-                    <span>Mode</span>
-                    <div class="mode-indicator" id="modeIndicator">
-                        <p>Normal</p>
-                    </div>
-                    <button id="fuckassButton" class="fuckass-btn">
-                        🤬 FUCKASS
-                    </button>
-                </div>
-
-                <div class="panel-section hide-on-mobile">
-                    <h3>CONTROLS</h3>
-                    <div class="controls-info controls-grid">
-                        <p>← → : Move</p>
-                        <p>↓ : Soft Drop</p>
-                        <p>Space : Hard Drop</p>
-                        <p>↑/X : Rotate R</p>
-                        <p>Z : Rotate L</p>
-                        <p>C : Hold</p>
-                        <p>P : Pause</p>
-                        <p>S : Softbody</p>
-                        <p style="color: #ff0080; font-weight: bold;">F : Chaos</p>
-                    </div>
+        <div class="side-panel left-panel">
+            <div class="panel-section hide-on-mobile">
+                <h3>CONTROLS</h3>
+                <div class="controls-info controls-grid">
+                    <p>← → : Move</p>
+                    <p>↓ : Soft Drop</p>
+                    <p>Space : Hard Drop</p>
+                    <p>↑/X : Rotate R</p>
+                    <p>Z : Rotate L</p>
+                    <p>C : Hold</p>
+                    <p>P : Pause</p>
+                    <p>S : Softbody</p>
+                    <p>R : Rainbow</p>
+                    <p>G : Ghost</p>
+                    <p>T : Trail</p>
+                    <p>I : Invisible</p>
+                    <p>B : Bomb</p>
+                    <p style="color: #ff0080; font-weight: bold;">F : 🤬 FUCKASS</p>
                 </div>
             </div>
+            <div class="panel-section hide-on-mobile">
+                <h3>PLAY TIPS</h3>
+                <p>On phones, swipe directly on the board to move, drop, or rotate pieces.</p>
+                <p>Tap the Mode card beside the board to toggle Softbody or Fuckass chaos.</p>
+            </div>
+        </div>
 
-            <!-- Center Game -->
-            <div class="main-game">
-                <div class="status-badges">
-                    <div class="pill">
-                        <span>Softbody Toggle</span>
-                        <strong>S Key</strong>
-                    </div>
-                    <div class="pill">
-                        <span>Particles</span>
-                        <strong>Active</strong>
-                    </div>
+        <div class="main-game">
+            <div class="status-badges">
+                <div class="pill">
+                    <span>Softbody Toggle</span>
+                    <strong>S Key</strong>
                 </div>
-                <h1 class="game-title">TETRIS ULTIMATE</h1>
-
-                <div class="tetris-stage">
-                    <div class="tetris-board">
-                        <div class="game-board-wrapper">
-                            <canvas id="gameCanvas" width="300" height="600"></canvas>
+                <div class="pill">
+                    <span>Fuckass Chaos</span>
+                    <strong>F Key</strong>
+                </div>
+            </div>
+            <h1 class="game-title">TETRIS ULTIMATE</h1>
+            <div class="tetris-stage">
+                <div class="tetris-column left-stack">
+                    <div class="mini-panel">
+                        <span>Hold</span>
+                        <canvas id="holdCanvas" width="120" height="120"></canvas>
+                    </div>
+                    <div class="mini-panel mode-card compact-mode">
+                        <span>Mode</span>
+                        <div class="mode-indicator" id="modeIndicator">
+                            <p>Normal</p>
                         </div>
+                        <button id="fuckassButton" class="fuckass-btn">
+                            🤬 FUCKASS MODE
+                        </button>
                     </div>
                 </div>
-
-                <div class="mobile-stats-grid" aria-label="Quick stats">
-                    <div class="mobile-stat">
-                        <span>Score</span>
-                        <strong id="scoreMobile">0</strong>
+                <div class="tetris-board">
+                    <canvas id="gameCanvas" width="300" height="600"></canvas>
+                    <div class="game-over-overlay" id="gameOverOverlay">
+                        <h2>GAME OVER</h2>
+                        <p>Final Score: <span id="finalScore">0</span></p>
+                        <p id="highScoreDisplay"></p>
+                        <button id="restartButton">Play Again</button>
                     </div>
-                    <div class="mobile-stat">
-                        <span>Level</span>
-                        <strong id="levelMobile">1</strong>
+                </div>
+                <div class="tetris-column right-stack">
+                    <div class="mini-panel tall-panel">
+                        <span>Next</span>
+                        <canvas id="nextCanvas" width="120" height="360"></canvas>
                     </div>
                 </div>
             </div>
+            <div class="touch-controls" id="tetrisTouchControls" aria-label="Tetris touch controls">
+                <div class="gesture-card">
+                    <h3>Swipe Controls</h3>
+                    <ul class="gesture-list">
+                        <li><strong>Swipe left / right</strong><span>Slide the piece</span></li>
+                        <li><strong>Swipe down</strong><span>Soft drop with momentum</span></li>
+                        <li><strong>Swipe up</strong><span>Instant hard drop</span></li>
+                        <li><strong>Tap</strong><span>Rotate clockwise</span></li>
+                        <li><strong>Double tap</strong><span>Hold piece</span></li>
+                    </ul>
+                    <p class="touch-hint">Keep your finger on the board to string moves together without lifting.</p>
+                </div>
+            </div>
+            <div class="mobile-stats-grid" aria-label="Quick stats">
+                <div class="mobile-stat">
+                    <span>Score</span>
+                    <strong id="scoreMobile">0</strong>
+                </div>
+                <div class="mobile-stat">
+                    <span>Level</span>
+                    <strong id="levelMobile">1</strong>
+                </div>
+                <div class="mobile-stat">
+                    <span>Lines</span>
+                    <strong id="linesMobile">0</strong>
+                </div>
+                <div class="mobile-stat">
+                    <span>Combo</span>
+                    <strong id="comboMobile">—</strong>
+                </div>
+            </div>
+        </div>
 
-            <!-- Multiplayer Lobby & Opponent View -->
-            <div class="multiplayer-section" id="multiplayerSection">
-                <div class="lobby-ui" id="lobbyUI">
-                    <h3>MULTIPLAYER</h3>
+        <div class="side-panel right-panel">
+            <div class="panel-section" id="multiplayerSection">
+                <h3>MULTIPLAYER</h3>
+                
+                <div id="lobbyUI">
                     <div class="lobby-controls">
-                        <button id="hostBtn" class="primary-btn">HOST GAME</button>
-                        <div class="join-group">
-                            <input type="text" id="joinInput" placeholder="Enter Code" maxlength="6">
-                            <button id="joinBtn" class="secondary-btn">JOIN</button>
+                        <button id="hostBtn" class="menu-btn" style="width: 100%; margin-bottom: 10px;">Host Game</button>
+                        <div class="join-form" style="display: flex; gap: 5px;">
+                            <input type="text" id="joinInput" placeholder="Code" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff;">
+                            <button id="joinBtn" class="menu-btn" style="padding: 8px 12px;">Join</button>
                         </div>
                     </div>
-                    <div id="lobbyStatus" class="lobby-status"></div>
-                    <div id="hostCodeDisplay" class="host-code-display" style="display: none;">
-                        <span>YOUR CODE:</span>
-                        <strong id="myPeerId">...</strong>
-                        <button class="copy-btn"
-                            onclick="navigator.clipboard.writeText(document.getElementById('myPeerId').innerText)">📋</button>
+                    <div id="hostCodeDisplay" style="display: none; flex-direction: column; gap: 10px; margin-top: 10px;">
+                        <p style="font-size: 0.9em; color: #aaa;">Share this code:</p>
+                        <code id="myPeerId" style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; font-family: monospace; color: #4ade80; text-align: center; font-size: 1.2em;">...</code>
                     </div>
+                    <p id="lobbyStatus" style="margin-top: 10px; font-size: 0.9em; color: #aaa; text-align: center;">Ready to connect</p>
                 </div>
 
-                <div class="opponent-view" id="opponentView" style="display: none;">
-                    <div class="opponent-header">
-                        <span class="status-dot online"></span>
-                        <span>OPPONENT</span>
+                <div id="opponentView" style="display: none;">
+                    <div class="opponent-stats" style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                        <span>Opponent</span>
+                        <span>Score: <strong id="oppScore" style="color: #4ade80;">0</strong></span>
                     </div>
-                    <canvas id="opponentCanvas" width="300" height="600"></canvas>
-                    <div class="opponent-stats">
-                        <div class="mini-stat">
-                            <span>SCORE</span>
-                            <strong id="oppScore">0</strong>
-                        </div>
-                    </div>
+                    <canvas id="opponentCanvas" width="150" height="300" style="background: #000; border: 1px solid #333; width: 100%; border-radius: 4px;"></canvas>
                 </div>
             </div>
 
-            <!-- Right Panel -->
-            <div class="side-panel right-panel">
-                <div class="panel-section compact-metrics">
-                    <div class="metric">
-                        <span>Score</span>
-                        <strong id="score">0</strong>
-                    </div>
-                    <div class="metric">
-                        <span>Level</span>
-                        <strong id="level">1</strong>
-                    </div>
-                    <div class="metric">
-                        <span>Lines</span>
-                        <strong id="lines">0</strong>
-                    </div>
-                    <div class="metric">
-                        <span>Combo</span>
-                        <strong id="combo"></strong>
-                    </div>
+            <div class="panel-section compact-metrics">
+                <div class="metric">
+                    <span>Score</span>
+                    <strong id="score">0</strong>
                 </div>
-                <div class="panel-section">
-                    <h3>NEXT</h3>
-                    <canvas id="nextCanvas" width="120" height="360"></canvas>
+                <div class="metric">
+                    <span>Level</span>
+                    <strong id="level">1</strong>
+                </div>
+                <div class="metric">
+                    <span>Lines</span>
+                    <strong id="lines">0</strong>
+                </div>
+                <div class="metric">
+                    <span>Combo</span>
+                    <strong id="combo"></strong>
                 </div>
             </div>
         </div>
 
         <footer class="app-footer">
-            Toggle jelly physics with <strong>S</strong>, pause with <strong>P</strong>.
+            Toggle chaos with <strong>F</strong>, unleash jelly with <strong>S</strong>, and punch out of danger with <strong>Space</strong>.
         </footer>
     </div>
 
-    <!-- Global Game Over Overlay -->
-    <div class="game-over-overlay" id="gameOverOverlay">
-        <div class="game-over-content">
-            <h2>GAME OVER</h2>
-            <div class="game-over-stats">
-                <div class="stat-row">
-                    <span>SCORE</span>
-                    <strong id="finalScore">0</strong>
-                </div>
-                <div class="stat-row highlight">
-                    <span>HIGH SCORE</span>
-                    <strong id="finalHighScore">0</strong>
-                </div>
-                <div class="stat-grid">
-                    <div class="mini-stat">
-                        <span>LINES</span>
-                        <strong id="finalLines">0</strong>
-                    </div>
-                    <div class="mini-stat">
-                        <span>LEVEL</span>
-                        <strong id="finalLevel">0</strong>
-                    </div>
-                </div>
-            </div>
-            <div id="newHighScoreBadge" class="new-record-badge" style="display: none;">
-                🏆 NEW RECORD!
-            </div>
-            <div class="game-over-actions">
-                <button id="restartButton" class="primary-btn">PLAY AGAIN</button>
-                <button onclick="location.href='hub.html'" class="secondary-btn">EXIT</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- PeerJS for Multiplayer -->
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    <script src="tetris-ultimate.js"></script>
+    <script src="tetris-ultimate-200.js"></script>
     <script>
         window.addEventListener('keydown', function (e) {
             const keys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '];
@@ -204,5 +190,4 @@
         }, { passive: false });
     </script>
 </body>
-
 </html>
