@@ -142,6 +142,7 @@ let dasTimer = 0;
 let lastInputTime = 0;
 let multiplayerMode = false;
 let networkManager = null;
+let lastBroadcastTime = 0;
 
 // Initialize
 function init() {
@@ -1066,9 +1067,10 @@ function gameLoop(time = 0) {
         currentPiece.color = COLORS.RAINBOW[colorIndex];
     }
     
-    // Broadcast state every few frames or on change (throttled)
-    if (multiplayerMode && networkManager && Math.floor(time) % 5 === 0) { // Simple throttle
+    // Broadcast state (throttled to ~30ms for smoother updates)
+    if (multiplayerMode && networkManager && time - lastBroadcastTime > 30) {
         networkManager.broadcastState();
+        lastBroadcastTime = time;
     }
 
     draw();
@@ -1090,6 +1092,13 @@ function endGame() {
     saveSettings();
     document.getElementById('finalScore').textContent = score;
     document.getElementById('gameOverOverlay').classList.add('show');
+
+    if (multiplayerMode) {
+        document.querySelector('#gameOverOverlay h2').textContent = 'YOU LOST';
+        createFuckassNotification('💀 YOU LOST!');
+    } else {
+        document.querySelector('#gameOverOverlay h2').textContent = 'GAME OVER';
+    }
 
     if (multiplayerMode && networkManager) {
         networkManager.sendData({ type: 'GAME_OVER' });
