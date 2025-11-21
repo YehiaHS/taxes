@@ -1258,7 +1258,8 @@ class NetworkManager {
     }
 
     getErrorMessage(err) {
-        const errType = err?.type || err?.toString() || 'unknown';
+        if (!err) return 'Unknown connection error';
+        const errType = err.type || (typeof err.toString === 'function' ? err.toString() : String(err));
         const messages = {
             'peer-unavailable': 'Code not found. Please check the code and try again.',
             'network': 'Network error. Please check your connection.',

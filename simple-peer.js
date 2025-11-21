@@ -94,7 +94,9 @@ class PeerConnection {
     close() {
         this.open = false;
         if (this._onclose) this._onclose();
-        this.connections?.delete(this.peerId);
+        if (this.peer && this.peer.connections) {
+            this.peer.connections.delete(this.peerId);
+        }
     }
 }
 
