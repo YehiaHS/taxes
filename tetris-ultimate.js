@@ -189,6 +189,54 @@ function initNetworkFeatures() {
     });
 }
 
+// Simple sound effect generator
+function playMultiplayerSound(type) {
+    if (!soundEnabled) return;
+    
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        switch(type) {
+            case 'connect':
+                osc.frequency.value = 800;
+                gain.gain.value = 0.3;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.stop(ctx.currentTime + 0.3);
+                break;
+            case 'disconnect':
+                osc.frequency.value = 400;
+                gain.gain.value = 0.3;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                osc.stop(ctx.currentTime + 0.5);
+                break;
+            case 'emoji':
+                osc.frequency.value = 600;
+                gain.gain.value = 0.2;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc.stop(ctx.currentTime + 0.2);
+                break;
+            case 'garbage':
+                osc.frequency.value = 200;
+                osc.type = 'sawtooth';
+                gain.gain.value = 0.3;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                osc.stop(ctx.currentTime + 0.4);
+                break;
+        }
+    } catch(e) {
+        // Audio not supported
+    }
+}
+
 // Feature 101: Save/Load System
 function saveSettings() {
     const settings = {
@@ -1269,6 +1317,7 @@ class NetworkManager {
 
         this.conn.on('open', () => {
             console.log('Connected to: ' + this.conn.peer);
+            playMultiplayerSound('connect');
             document.getElementById('lobbyStatus').textContent = '✅ Connected!';
             document.getElementById('lobbyStatus').style.color = '#4ade80';
             
@@ -1326,6 +1375,7 @@ class NetworkManager {
     }
     
     handleDisconnect(message) {
+        playMultiplayerSound('disconnect');
         multiplayerMode = false;
         document.getElementById('opponentView').style.display = 'none';
         document.getElementById('lobbyUI').style.display = 'block';
@@ -1373,6 +1423,7 @@ class NetworkManager {
     }
     
     showEmoji(emoji) {
+        playMultiplayerSound('emoji');
         // Display emoji notification from opponent
         const emojiEl = document.createElement('div');
         emojiEl.textContent = emoji;
@@ -1439,6 +1490,7 @@ class NetworkManager {
     }
 
     receiveGarbage(count) {
+        playMultiplayerSound('garbage');
         createFuckassNotification(`WARNING: ${count} GARBAGE INCOMING!`);
         // Add garbage lines to the bottom
         for (let i = 0; i < count; i++) {
