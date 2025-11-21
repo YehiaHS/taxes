@@ -971,7 +971,13 @@ function handleKeyDown(e) {
         'b': () => { if (bombsAvailable > 0) useBomb(); },
         'B': () => { if (bombsAvailable > 0) useBomb(); },
         'f': () => toggleFuckassMode(),
-        'F': () => toggleFuckassMode()
+        'F': () => toggleFuckassMode(),
+        // Multiplayer emoji shortcuts
+        '1': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('👍'); },
+        '2': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('🔥'); },
+        '3': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('😱'); },
+        '4': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('💪'); },
+        '5': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('😎'); }
     };
     
     if (keyActions[e.key]) keyActions[e.key]();
@@ -1536,7 +1542,10 @@ class NetworkManager {
             payload: {
                 board: simplifiedBoard,
                 score: score,
-                piece: currentPiece
+                lines: lines,
+                level: level,
+                piece: currentPiece,
+                gameOver: gameOver
             }
         });
     }
@@ -1575,7 +1584,24 @@ class NetworkManager {
         }
 
         ctx.restore();
+        
+        // Update opponent stats
         document.getElementById('oppScore').textContent = data.score;
+        const oppLinesEl = document.getElementById('oppLines');
+        const oppLevelEl = document.getElementById('oppLevel');
+        const oppStatusEl = document.getElementById('oppStatus');
+        
+        if (oppLinesEl) oppLinesEl.textContent = data.lines || 0;
+        if (oppLevelEl) oppLevelEl.textContent = data.level || 1;
+        if (oppStatusEl) {
+            if (data.gameOver) {
+                oppStatusEl.textContent = 'Game Over';
+                oppStatusEl.style.color = '#ff4444';
+            } else {
+                oppStatusEl.textContent = 'Playing';
+                oppStatusEl.style.color = '#4ade80';
+            }
+        }
     }
 }
 

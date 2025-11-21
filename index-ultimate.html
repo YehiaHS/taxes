@@ -144,18 +144,33 @@
 
                 <div id="opponentView" style="display: none; position: relative;">
                     <div class="connection-status" id="connectionStatus" title="Connected"></div>
-                    <div class="opponent-stats" style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    <div class="opponent-stats" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
                         <span>Opponent</span>
                         <span>Score: <strong id="oppScore" style="color: #4ade80;">0</strong></span>
                     </div>
                     <canvas id="opponentCanvas" width="150" height="300" style="background: #000; border: 1px solid #333; width: 100%; border-radius: 4px;"></canvas>
-                    <div class="emoji-reactions" style="display: flex; gap: 5px; margin-top: 10px; justify-content: center; flex-wrap: wrap;">
-                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('👍')" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">👍</button>
-                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('🔥')" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">🔥</button>
-                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('😱')" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">😱</button>
-                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('💪')" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">💪</button>
-                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('😎')" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">😎</button>
+                    <div class="stats-comparison" style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px; font-size: 0.85em;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Lines:</span>
+                            <span id="oppLines" style="color: #4ade80;">0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Level:</span>
+                            <span id="oppLevel" style="color: #4ade80;">1</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Status:</span>
+                            <span id="oppStatus" style="color: #4ade80;">Playing</span>
+                        </div>
                     </div>
+                    <div class="emoji-reactions" style="display: flex; gap: 5px; margin-top: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('👍')" title="Good job! (Press 1)" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">👍</button>
+                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('🔥')" title="On fire! (Press 2)" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">🔥</button>
+                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('😱')" title="Oh no! (Press 3)" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">😱</button>
+                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('💪')" title="Strong! (Press 4)" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">💪</button>
+                        <button class="emoji-btn" onclick="networkManager?.sendEmoji('😎')" title="Cool! (Press 5)" style="font-size: 1.5em; padding: 5px 10px; border: none; background: rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer;">😎</button>
+                    </div>
+                    <p style="text-align: center; font-size: 0.75em; color: #888; margin-top: 8px;">Press 1-5 for quick reactions</p>
                 </div>
             </div>
 
