@@ -456,4 +456,108 @@ body.fuckass-mode {
     .tetris-stage { transform: scale(0.8); }
     .game-title { font-size: 2.5rem; }
     .side-panel { flex-direction: column; }
+    
+    .emoji-btn {
+        font-size: 1.2em !important;
+        padding: 4px 8px !important;
+    }
+    
+    .stats-comparison {
+        font-size: 0.75em !important;
+    }
+    
+    #multiplayerSection {
+        width: 100%;
+    }
+}
+
+/* MULTIPLAYER ENHANCEMENTS */
+.emoji-btn {
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.emoji-btn:hover {
+    transform: scale(1.2);
+    background: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+}
+
+.emoji-btn:active {
+    transform: scale(0.9);
+}
+
+#opponentCanvas {
+    border: 2px solid var(--glass-border) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+}
+
+#hostCodeDisplay code {
+    font-size: 1.5em !important;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { text-shadow: 0 0 10px rgba(74, 222, 128, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(74, 222, 128, 0.8); }
+}
+
+.share-btn {
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%) !important;
+}
+
+.share-btn:hover {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+}
+
+.disconnect-btn {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    margin-top: 10px;
+}
+
+.disconnect-btn:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+}
+
+#lobbyStatus {
+    font-family: var(--font-display);
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.opponent-stats {
+    font-family: var(--font-display);
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.emoji-reactions {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+/* CONNECTION STATUS INDICATOR */
+.connection-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
 }

@@ -189,6 +189,54 @@ function initNetworkFeatures() {
     });
 }
 
+// Simple sound effect generator
+function playMultiplayerSound(type) {
+    if (!soundEnabled) return;
+    
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        switch(type) {
+            case 'connect':
+                osc.frequency.value = 800;
+                gain.gain.value = 0.3;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.stop(ctx.currentTime + 0.3);
+                break;
+            case 'disconnect':
+                osc.frequency.value = 400;
+                gain.gain.value = 0.3;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                osc.stop(ctx.currentTime + 0.5);
+                break;
+            case 'emoji':
+                osc.frequency.value = 600;
+                gain.gain.value = 0.2;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc.stop(ctx.currentTime + 0.2);
+                break;
+            case 'garbage':
+                osc.frequency.value = 200;
+                osc.type = 'sawtooth';
+                gain.gain.value = 0.3;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                osc.stop(ctx.currentTime + 0.4);
+                break;
+        }
+    } catch(e) {
+        // Audio not supported
+    }
+}
+
 // Feature 101: Save/Load System
 function saveSettings() {
     const settings = {
@@ -923,7 +971,13 @@ function handleKeyDown(e) {
         'b': () => { if (bombsAvailable > 0) useBomb(); },
         'B': () => { if (bombsAvailable > 0) useBomb(); },
         'f': () => toggleFuckassMode(),
-        'F': () => toggleFuckassMode()
+        'F': () => toggleFuckassMode(),
+        // Multiplayer emoji shortcuts
+        '1': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('👍'); },
+        '2': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('🔥'); },
+        '3': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('😱'); },
+        '4': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('💪'); },
+        '5': () => { if (multiplayerMode && networkManager) networkManager.sendEmoji('😎'); }
     };
     
     if (keyActions[e.key]) keyActions[e.key]();
@@ -1194,36 +1248,73 @@ class NetworkManager {
 
         this.peer.on('error', (err) => {
             console.error('PeerJS Error:', err);
-            alert('Multiplayer Error: ' + err.type);
+            const errorMsg = this.getErrorMessage(err);
+            document.getElementById('lobbyStatus').textContent = errorMsg;
+            document.getElementById('lobbyStatus').style.color = '#ff4444';
+            setTimeout(() => {
+                document.getElementById('lobbyStatus').style.color = '#aaa';
+            }, 3000);
         });
+    }
+
+    getErrorMessage(err) {
+        if (!err) return 'Unknown connection error';
+        const errType = err.type || (typeof err.toString === 'function' ? err.toString() : String(err));
+        const messages = {
+            'peer-unavailable': 'Code not found. Please check the code and try again.',
+            'network': 'Network error. Please check your connection.',
+            'server-error': 'Server error. Please try again later.',
+            'unavailable-id': 'This code is already in use. Please create a new game.',
+        };
+        return messages[errType] || `Connection error: ${errType}`;
     }
 
     hostGame() {
         this.isHost = true;
         document.getElementById('hostCodeDisplay').style.display = 'flex';
         document.getElementById('myPeerId').textContent = this.peerId;
-        document.getElementById('lobbyStatus').textContent = 'Waiting for opponent...';
+        document.getElementById('lobbyStatus').textContent = '⏳ Waiting for opponent...';
+        document.getElementById('lobbyStatus').style.color = '#4ade80';
 
         // Update URL for easy sharing
         const shareUrl = `${window.location.origin}${window.location.pathname}?join=${this.peerId}`;
         window.history.pushState({}, '', `?join=${this.peerId}`);
 
-        // Create a share button
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'secondary-btn';
-        shareBtn.textContent = '🔗 Copy Link';
-        shareBtn.onclick = () => {
-            navigator.clipboard.writeText(shareUrl);
-            shareBtn.textContent = '✅ Copied!';
-            setTimeout(() => shareBtn.textContent = '🔗 Copy Link', 2000);
-        };
-        document.getElementById('hostCodeDisplay').appendChild(shareBtn);
+        // Create a share button if it doesn't exist
+        let shareBtn = document.querySelector('#hostCodeDisplay .share-btn');
+        if (!shareBtn) {
+            shareBtn = document.createElement('button');
+            shareBtn.className = 'menu-btn share-btn';
+            shareBtn.textContent = '🔗 Copy Link';
+            shareBtn.onclick = () => {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    shareBtn.textContent = '✅ Copied!';
+                    setTimeout(() => shareBtn.textContent = '🔗 Copy Link', 2000);
+                }).catch(() => {
+                    // Fallback for browsers without clipboard API
+                    const input = document.createElement('input');
+                    input.value = shareUrl;
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(input);
+                    shareBtn.textContent = '✅ Copied!';
+                    setTimeout(() => shareBtn.textContent = '🔗 Copy Link', 2000);
+                });
+            };
+            document.getElementById('hostCodeDisplay').appendChild(shareBtn);
+        }
     }
 
     joinGame(hostId) {
-        if (!hostId) return;
+        if (!hostId) {
+            document.getElementById('lobbyStatus').textContent = 'Please enter a code';
+            document.getElementById('lobbyStatus').style.color = '#ff4444';
+            return;
+        }
         this.isHost = false;
-        document.getElementById('lobbyStatus').textContent = 'Connecting...';
+        document.getElementById('lobbyStatus').textContent = '🔄 Connecting...';
+        document.getElementById('lobbyStatus').style.color = '#4ade80';
         const conn = this.peer.connect(hostId.toUpperCase());
         this.handleConnection(conn);
     }
@@ -1233,9 +1324,33 @@ class NetworkManager {
 
         this.conn.on('open', () => {
             console.log('Connected to: ' + this.conn.peer);
-            document.getElementById('lobbyStatus').textContent = 'Connected!';
+            playMultiplayerSound('connect');
+            document.getElementById('lobbyStatus').textContent = '✅ Connected!';
+            document.getElementById('lobbyStatus').style.color = '#4ade80';
+            
+            // Add a disconnect button
+            const disconnectBtn = document.createElement('button');
+            disconnectBtn.className = 'menu-btn';
+            disconnectBtn.textContent = '🚪 Disconnect';
+            disconnectBtn.style.marginTop = '10px';
+            disconnectBtn.style.width = '100%';
+            disconnectBtn.onclick = () => {
+                if (confirm('Are you sure you want to disconnect?')) {
+                    this.disconnect();
+                }
+            };
+            
             document.getElementById('lobbyUI').style.display = 'none';
             document.getElementById('opponentView').style.display = 'block';
+            
+            // Add disconnect button to opponent view
+            const existingDisconnect = document.querySelector('#opponentView .disconnect-btn');
+            if (!existingDisconnect) {
+                const oppView = document.getElementById('opponentView');
+                oppView.appendChild(disconnectBtn);
+                disconnectBtn.className = 'menu-btn disconnect-btn';
+            }
+            
             multiplayerMode = true;
 
             // If host, start game for both (signal start)
@@ -1250,12 +1365,37 @@ class NetworkManager {
         });
 
         this.conn.on('close', () => {
-            alert('Opponent disconnected');
-            multiplayerMode = false;
-            document.getElementById('opponentView').style.display = 'none';
-            document.getElementById('lobbyUI').style.display = 'block';
-            window.history.pushState({}, '', window.location.pathname); // Clear URL
+            this.handleDisconnect('Opponent disconnected');
         });
+        
+        this.conn.on('error', (err) => {
+            console.error('Connection error:', err);
+            this.handleDisconnect('Connection error occurred');
+        });
+    }
+    
+    disconnect() {
+        if (this.conn) {
+            this.conn.close();
+        }
+        this.handleDisconnect('You disconnected');
+    }
+    
+    handleDisconnect(message) {
+        playMultiplayerSound('disconnect');
+        multiplayerMode = false;
+        document.getElementById('opponentView').style.display = 'none';
+        document.getElementById('lobbyUI').style.display = 'block';
+        document.getElementById('lobbyStatus').textContent = message;
+        document.getElementById('lobbyStatus').style.color = '#ff9900';
+        document.getElementById('hostCodeDisplay').style.display = 'none';
+        window.history.pushState({}, '', window.location.pathname); // Clear URL
+        
+        // Remove disconnect button if it exists
+        const disconnectBtn = document.querySelector('.disconnect-btn');
+        if (disconnectBtn) {
+            disconnectBtn.remove();
+        }
     }
 
     handleData(data) {
@@ -1280,7 +1420,55 @@ class NetworkManager {
                     restart();
                 };
                 break;
+            case 'EMOJI':
+                this.showEmoji(data.emoji);
+                break;
+            case 'PING':
+                this.updateLatency(Date.now() - data.timestamp);
+                break;
         }
+    }
+    
+    showEmoji(emoji) {
+        playMultiplayerSound('emoji');
+        // Display emoji notification from opponent
+        const emojiEl = document.createElement('div');
+        emojiEl.textContent = emoji;
+        emojiEl.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            animation: emojiPop 1.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 9999;
+        `;
+        document.body.appendChild(emojiEl);
+        setTimeout(() => emojiEl.remove(), 1500);
+        
+        // Add animation if not exists
+        if (!document.getElementById('emojiPopStyle')) {
+            const style = document.createElement('style');
+            style.id = 'emojiPopStyle';
+            style.textContent = `
+                @keyframes emojiPop {
+                    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+                    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+                    100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    updateLatency(latency) {
+        // Could show latency indicator
+        console.log('Latency:', latency, 'ms');
+    }
+    
+    sendEmoji(emoji) {
+        this.sendData({ type: 'EMOJI', emoji });
     }
 
     sendData(data) {
@@ -1309,6 +1497,7 @@ class NetworkManager {
     }
 
     receiveGarbage(count) {
+        playMultiplayerSound('garbage');
         createFuckassNotification(`WARNING: ${count} GARBAGE INCOMING!`);
         // Add garbage lines to the bottom
         for (let i = 0; i < count; i++) {
@@ -1354,7 +1543,10 @@ class NetworkManager {
             payload: {
                 board: simplifiedBoard,
                 score: score,
-                piece: currentPiece
+                lines: lines,
+                level: level,
+                piece: currentPiece,
+                gameOver: gameOver
             }
         });
     }
@@ -1393,7 +1585,24 @@ class NetworkManager {
         }
 
         ctx.restore();
+        
+        // Update opponent stats
         document.getElementById('oppScore').textContent = data.score;
+        const oppLinesEl = document.getElementById('oppLines');
+        const oppLevelEl = document.getElementById('oppLevel');
+        const oppStatusEl = document.getElementById('oppStatus');
+        
+        if (oppLinesEl) oppLinesEl.textContent = data.lines || 0;
+        if (oppLevelEl) oppLevelEl.textContent = data.level || 1;
+        if (oppStatusEl) {
+            if (data.gameOver) {
+                oppStatusEl.textContent = 'Game Over';
+                oppStatusEl.style.color = '#ff4444';
+            } else {
+                oppStatusEl.textContent = 'Playing';
+                oppStatusEl.style.color = '#4ade80';
+            }
+        }
     }
 }
 
